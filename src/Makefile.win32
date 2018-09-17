@@ -1,0 +1,31 @@
+# WIN32 Makefile for MINGW Platform
+# general definitions
+
+CC = gcc
+CFLAGS = -g -O2 -Wall -DSCM_TARGET_WIN32
+LDFLAGS =  -g -lm -lws2_32
+
+# sources
+
+SRC = gc.c proc.c main.c win32.c
+OBJ = $(SRC:.c=.o)
+
+# rules
+all: schemy.exe
+
+schemy.exe: $(OBJ)
+	echo $(OBJ)
+	$(CC) -o $@ $(OBJ) $(LDFLAGS)
+
+schemy-debug: schemy
+	$(CC) -o proc.o -c $(CFLAGS) -DSCHEMY_DEBUG_GLOBAL proc.c
+	$(CC) -o $@ $(LDFLAGS) $(OBJ)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	del schemy schemy-debug $(OBJ)
+gc.c: gc.h proc.h
+main.c: gc.h proc.h
+proc.c: gc.h proc.h

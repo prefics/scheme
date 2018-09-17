@@ -1,0 +1,41 @@
+# Schemy makefile
+
+# general definitions
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+
+
+CC = @CC@
+CFLAGS = @CFLAGS@ -Wstrict-prototypes -Wmissing-prototypes \
+         -Wpointer-arith -Wbad-function-cast -DSCM_TARGET_POSIX \
+         -DSCM_BINARY=\"@bindir@/schemy\" -DINDIRECT_THREADED_CODE @X_CFLAGS@
+LDFLAGS = @LDFLAGS@ -g @LIBS@ -lutil
+#LDFLAGS = @LDFLAGS@ -g @LIBS@ @X_PRE_LIBS@ @X_LIBS@ -lX11 @X_EXTRA_LIBS@
+
+
+# sources
+
+SRC = mem.c proc.c main.c image.c unix.c
+OBJ = $(SRC:.c=.o)
+
+# rules
+all: schemy
+
+schemy: $(OBJ)
+	echo $(OBJ)
+	$(CC) -o $@ $(OBJ) $(LDFLAGS)
+
+schemy-debug: schemy
+	$(CC) -o proc.o -c $(CFLAGS) -DSCHEMY_DEBUG_GLOBAL proc.c
+	$(CC) -o $@ $(LDFLAGS) $(OBJ)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	rm -f ./schemy ./schemy-debug $(OBJ)
+
+mem.c: mem.h proc.h
+main.c: mem.h proc.h image.h
+proc.c: mem.h proc.h

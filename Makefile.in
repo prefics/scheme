@@ -1,0 +1,206 @@
+# Makefile.in file
+
+CC=@CC@
+VERSION=@VERSION@
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
+
+INSTALL=@INSTALL@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+BINDIR=@bindir@
+LIBDIR=@libdir@/schemy
+
+SCHEMY=src/schemy
+IMAGE=scheme/initial.image
+
+RUNTIME=boot/runtime-base.fasl			\
+	boot/runtime-number.fasl		\
+	boot/runtime-rules.fasl			\
+	boot/runtime-format.fasl		\
+	boot/runtime-record.fasl		\
+	boot/runtime-module.fasl		\
+	boot/runtime-fluids.fasl		\
+	boot/runtime-conditions.fasl		\
+	boot/runtime-port.fasl			\
+	boot/runtime-read.fasl			\
+	boot/runtime-hashtable.fasl		\
+	boot/runtime-init.fasl			\
+	boot/runtime-eta-primitives.fasl
+
+COMPILER=boot/compiler-syntax.fasl		\
+	boot/compiler-compiler.fasl		\
+	boot/compiler-gen.fasl			\
+	boot/compiler-assembler.fasl		\
+	boot/compiler-fasl.fasl		
+
+POSIX=	boot/posix-file.fasl			\
+	boot/posix-filename.fasl		\
+	boot/posix-time.fasl			\
+	boot/posix-constants.fasl		\
+	boot/posix-process.fasl		
+
+REPL=	boot/repl-repl.fasl
+
+MODULES=scheme-environment      \
+	tool-schake             \
+	tool-sdoc        	\
+	tool-scms
+
+all: scmrepl scmc scmld scmscript modules schake scmdoc scms
+
+configure: configure.in 
+	autoconf
+
+scmrepl: $(IMAGE)
+	(echo ,in scheme-repl ; \
+	 echo \(save-image-file \"scmrepl\" run-repl\)) | \
+	SCHEMY_MODULE_PATH=boot $(SCHEMY) --image $(IMAGE)
+
+scms: $(IMAGE)
+	(echo ,lf boot/tool-scms.fasl ; \
+	 echo ,in tool-scms ; \
+	 echo \(save-image-file \"scms\" main\)) | \
+	SCHEMY_MODULE_PATH=boot $(SCHEMY) --image $(IMAGE)
+
+scmc: $(IMAGE)
+	(echo ,in scheme-repl ; \
+	 echo \(save-image-file \"scmc\" compiler-main\)) | \
+	SCHEMY_MODULE_PATH=boot $(SCHEMY) --image $(IMAGE)
+
+scmld: $(IMAGE)
+	(echo ,in scheme-repl ; \
+	 echo \(save-image-file \"scmld\" linker-main\)) | \
+	SCHEMY_MODULE_PATH=boot $(SCHEMY) --image $(IMAGE)
+
+scmscript: $(IMAGE)
+	(echo ,in scheme-repl ; \
+	 echo \(save-image-file \"scmscript\" script-main\)) | \
+	SCHEMY_MODULE_PATH=boot $(SCHEMY) --image $(IMAGE)
+
+schake: $(IMAGE)
+	(echo ,lf boot/tool-schake.fasl ; \
+	 echo ,in tool-schake ; \
+	 echo \(save-image-file \"schake\" main\)) | \
+	SCHEMY_MODULE_PATH=boot $(SCHEMY) --image $(IMAGE)
+
+scmdoc: $(IMAGE)
+	(echo ,lf boot/tool-sdoc.fasl ; \
+	 echo ,in tool-sdoc ; \
+	 echo \(save-image-file \"scmdoc\" main\)) | \
+	SCHEMY_MODULE_PATH=boot $(SCHEMY) --image $(IMAGE)
+
+$(IMAGE): vm $(RUNTIME) $(COMPILER) $(POSIX) $(REPL) boot/boot.fasl
+	cd scheme ; ../src/schemy --fasl ../boot/boot.fasl
+
+vm: src/schemy
+
+src/schemy:
+	cd src ; make schemy
+
+modules:
+	for mod in $(MODULES); do	\
+		cd scheme/$$mod ; SCHEMY_MODULE_PATH=../../boot ../../src/schemy --image ../../scmc package.scm; \
+                mv $$mod.fasl ../../boot ; cd ../.. ; \
+	done
+
+install: scmrepl scmc scmld scmscript schake scmdoc
+	$(INSTALL) src/schemy $(BINDIR)
+	$(INSTALL) scmrepl $(BINDIR)
+	$(INSTALL) scmc $(BINDIR)
+	$(INSTALL) scmld $(BINDIR)
+	$(INSTALL) scmscript $(BINDIR)
+	$(INSTALL) schake $(BINDIR)
+	$(INSTALL) scmdoc $(BINDIR)
+	mkdir -p $(LIBDIR)
+	for mod in $(MODULES); do					\
+		$(INSTALL) boot/$$mod.fasl $(LIBDIR) ;	\
+	done
+
+clean:
+	cd src ; make clean
+	rm -f scmrepl
+	rm -f scmc
+	rm -f scmld
+	rm -f scmscript
+	rm -f scmdoc
+	rm -f schake
+	rm -f $(IMAGE)
+	for mod in $(MODULES); do			\
+		rm -f boot/$$mod.fasl ;	\
+	done
+
+distclean: clean
+	rm -f scheme/initial.image
+	rm -f config.log
+	rm -f config.status
+	rm -f config.cache
+	rm -f Makefile src/Makefile
+
+bootstrap:
+	cd scheme ; ( echo '' ; \
+		      echo ',config ,load compat-s48.scm'; \
+		      echo ',config ,load scheme-runtime.scm'; \
+		      echo ',config ,load scheme-compiler.scm'; \
+		      echo ',in scheme-compiler'; \
+		      echo ',load bootstrap.scm'; \
+		      echo '(initial-env)' ; \
+		      echo '(compile-initial-files)'; \
+		      echo ',exit' ) | scheme48 
+
+bootstrap-runtime:
+	cd scheme ; ( echo '' ; \
+		      echo ',config ,load compat-s48.scm'; \
+		      echo ',config ,load scheme-runtime.scm'; \
+		      echo ',config ,load scheme-compiler.scm'; \
+		      echo ',in scheme-compiler'; \
+		      echo ',load bootstrap.scm'; \
+		      echo '(initial-env)' ; \
+		      echo '(compile-runtime)'; \
+		      echo ',exit' ) | scheme48 
+
+bootstrap-compiler:
+	cd scheme ; ( echo '' ; \
+		      echo ',config ,load compat-s48.scm'; \
+		      echo ',config ,load scheme-runtime.scm'; \
+		      echo ',config ,load scheme-compiler.scm'; \
+		      echo ',in scheme-compiler'; \
+		      echo ',load bootstrap.scm'; \
+		      echo '(initial-env)' ; \
+		      echo '(compile-compiler)'; \
+		      echo ',exit' ) | scheme48 
+
+bootstrap-repl:
+	cd scheme ; ( echo '' ; \
+		      echo ',config ,load compat-s48.scm'; \
+		      echo ',config ,load scheme-runtime.scm'; \
+		      echo ',config ,load scheme-compiler.scm'; \
+		      echo ',in scheme-compiler'; \
+		      echo ',load bootstrap.scm'; \
+		      echo '(initial-env)' ; \
+		      echo '(compile-repl)'; \
+		      echo ',exit' ) | scheme48 
+
+bootstrap-posix:
+	cd scheme ; ( echo '' ; \
+		      echo ',config ,load compat-s48.scm'; \
+		      echo ',config ,load scheme-runtime.scm'; \
+		      echo ',config ,load scheme-compiler.scm'; \
+		      echo ',in scheme-compiler'; \
+		      echo ',load bootstrap.scm'; \
+		      echo '(initial-env)' ; \
+		      echo '(compile-posix)'; \
+		      echo ',exit' ) | scheme48 
+
+bootstrap-boot:
+	cd scheme ; ( echo '' ; \
+		      echo ',config ,load compat-s48.scm'; \
+		      echo ',config ,load scheme-runtime.scm'; \
+		      echo ',config ,load scheme-compiler.scm'; \
+		      echo ',in scheme-compiler'; \
+		      echo ',load bootstrap.scm'; \
+		      echo '(initial-env)' ; \
+		      echo '(compile-boot)'; \
+		      echo ',exit' ) | scheme48 

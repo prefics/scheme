@@ -1,0 +1,15 @@
+# Installing
+
+The installation follows the standard of GNU with respect to software projects.
+
+1. You configure the package with the `configure` command:
+
+    % ./configure
+
+2. You compile the system with:
+
+    % make
+
+3. Finally you install the binaries with:
+
+    % make install

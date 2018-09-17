@@ -1,0 +1,22 @@
+TODO File for Schemy
+
+* Add options when opening file for the action when the file exists 
+  (like OCREAT| OTRUNC ...)
+* Make the heaps extensible on demand
+* garbage collect non longer used symbols (add a pass after marking)
+* rewrite CHANNEL system so that blocking on write do not resend the complete
+  buffer but only what is missing
+* condition overhaul, make it more like record with define-condition-type
+* program a THREAD-INTERRUPT! procedure that executes a THUNK within an 
+  existing thread.
+* should move all io function to scheme-posix
+
+POSIX
+
+* Socket should handle error better (two accept on the same port should in
+  particular signal a condition)
+
+BUGS
+
+* (let-fluid $current-output-port$ 1 (lambda () (error "123")))
+  produces a lot of "Reloc table full!" message and leads to a core
