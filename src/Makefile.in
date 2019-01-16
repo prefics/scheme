@@ -10,7 +10,7 @@ CC = @CC@
 CFLAGS = @CFLAGS@ -Wstrict-prototypes -Wmissing-prototypes \
          -Wpointer-arith -Wbad-function-cast -DSCM_TARGET_POSIX \
          -DSCM_BINARY=\"@bindir@/schemy\" -DINDIRECT_THREADED_CODE @X_CFLAGS@
-LDFLAGS = @LDFLAGS@ -g @LIBS@ -lutil
+LDFLAGS = @LDFLAGS@ -g @LIBS@ -lutil -rdynamic
 #LDFLAGS = @LDFLAGS@ -g @LIBS@ @X_PRE_LIBS@ @X_LIBS@ -lX11 @X_EXTRA_LIBS@
 
 
