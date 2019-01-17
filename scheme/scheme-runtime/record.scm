@@ -559,7 +559,8 @@
             
 (define (generic-add-method! generic method)
   (if (method-congruents? method generic)
-      (begin
+      (let ((debug-name (generic-name generic)))
+        (set-method-debug-name! method generic)
         (set-generic-methods! generic
                               (add-method method
                                           (generic-methods generic)))
@@ -597,6 +598,10 @@
 
 (define (method-specs meth) (vector-ref (procedure-ref meth 0) 1))
 
+(define (set-method-debug-name! method name)
+  (let* ((template (procedure-template method))
+         (debug (template-debug template)))
+    (if (vector? debug) (vector-set! debug 0 name))))
 ;; Note: if you modify this syntax definition, you should also change
 ;; the same definition in bootstrap.scm
 (define-syntax define-method
