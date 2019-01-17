@@ -11,6 +11,7 @@
 #include "win32.h"
 #endif
 #include "image.h"
+#include "prof.h"
 
 static
 void usage(void)
@@ -19,6 +20,10 @@ void usage(void)
 	 "[--image IMAGE_FILENAME] specify the filename of image to use\n"
 	 "[--fasl FASL_FILENAME] specify a fasl file to run\n"
 	 "[--heap-size SIZE] specify the heap size\n"
+         "[--enable-profiling] enable generation of profiling data\n"
+         "[--disable-profiling] disable generation of profiling data\n"
+         "[--profile-filename=FILENAME] specify filename of profiling data\n"
+         "[--sampling-rate=XXX] define the sampling rate in [micros] for profiling\n"
 	 
 	 "[--help]\n") ;
   exit(0) ;
@@ -77,6 +82,22 @@ int main(int argc, char *argv[])
 	{
 	  heap_size = atoi((argv[i])+12) ;
 	}
+      else if (strprefix(argv[i], "--enable-profiling") == 0)
+        {
+          opt_enable_profiler = 1 ;
+        }
+      else if (strprefix(argv[i], "--disable-profiling") == 0)
+        {
+          opt_enable_profiler = 0 ;
+        }
+      else if (strprefix(argv[i], "--profile-filename=") == 0)
+        {
+          opt_profile_filename = &argv[i][19] ;
+        }
+      else if (strprefix(argv[i], "--sampling-rate=") == 0)
+        {
+          opt_sampling_rate = atoi(&argv[i][16]) ;
+        }
       else
         break ; 
     }
@@ -124,9 +145,11 @@ int main(int argc, char *argv[])
       PAIR(pair)->cdr = args ;
       args = pair ;
     }
+  init_profiling() ;
   ret = run(template, args) ;
   /*  write_obj(ret) ; 
    *  printf("\n") ;
    */
+  stop_profiling() ;
   exit(0) ;
 }

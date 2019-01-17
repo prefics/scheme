@@ -37,6 +37,7 @@
 #include "win32.h"
 #endif
 
+#include "prof.h"
 #include "image.h"
 #include "proc.h"
 #include "mem.h"
@@ -461,6 +462,9 @@ obj_t run(obj_t t, obj_t args)
 	  VECTOR(a1)->val[3] = make_fixnum(pc+1) ;
 	  cont = a1 ;
 	BYTECODE(TAIL):
+          if (do_sample_profile)
+            profiler_sample() ;
+          
 	  if (closurep(val))
 	    {
 	      /* call closure */

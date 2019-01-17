@@ -34,10 +34,18 @@ void host_init(int argc, int start, char *argv[])
   /* Ignore the SIG_PIPE signal so no errors happens when writing
    * happen
    */
-  signal(SIGPIPE, SIG_IGN) ;
-  signal(SIGCHLD, handler_sig_child) ;
-  signal(SIGVTALRM, handler_sig_vtalarm) ;
-  signal(SIGINT, handler_sig_int) ;
+  struct sigaction sa ;
+
+  memset(&sa, 0, sizeof(sa)) ;
+  sa.sa_flags = 0 ;
+  sigemptyset(&sa.sa_mask) ;
+  sa.sa_handler = SIG_IGN ;
+  sigaction(SIGPIPE, &sa, NULL) ;
+  sa.sa_handler = handler_sig_child ;
+  sigaction(SIGCHLD, &sa, NULL) ;
+  sa.sa_handler = handler_sig_int ;
+  sigaction(SIGINT, &sa, NULL) ;
+            
   fcntl(0, F_SETFL, O_NONBLOCK) ;
   fcntl(1, F_SETFL, O_NONBLOCK) ;
   fcntl(2, F_SETFL, O_NONBLOCK) ;

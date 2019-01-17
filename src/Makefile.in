@@ -16,7 +16,7 @@ LDFLAGS = @LDFLAGS@ -g @LIBS@ -lutil -rdynamic
 
 # sources
 
-SRC = mem.c proc.c main.c image.c unix.c
+SRC = mem.c proc.c main.c image.c unix.c prof.c
 OBJ = $(SRC:.c=.o)
 
 # rules
