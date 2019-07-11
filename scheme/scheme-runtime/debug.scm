@@ -326,6 +326,15 @@
 	      (continuation-template cc)
 	      (continuation-pc cc)))
 
+(define (for-each-stack-frame proc)
+  (suspend-cc
+   (lambda (return)
+     (let loop ((frame (cc->frame return)))
+       (if (vector? frame)
+           (begin
+             (proc frame)
+             (loop (frame-previous frame))))))))
+
 (define (show-backtrace condition)
   (display "Backtrace :") (newline)
   (suspend-cc

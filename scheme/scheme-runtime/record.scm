@@ -560,7 +560,7 @@
 (define (generic-add-method! generic method)
   (if (method-congruents? method generic)
       (let ((debug-name (generic-name generic)))
-        (set-method-debug-name! method generic)
+        (set-method-debug-name! method debug-name)
         (set-generic-methods! generic
                               (add-method method
                                           (generic-methods generic)))
@@ -597,6 +597,11 @@
   ;; 	     (else (cons (car meths) (lp (cdr meths)))))))))
 
 (define (method-specs meth) (vector-ref (procedure-ref meth 0) 1))
+
+;; These are copied here, because they need to be defined early
+;; They are used during boot when creating generics
+(define (procedure-template proc) (procedure-ref proc 1))
+(define (template-debug template)    (vector-ref template 2))
 
 (define (set-method-debug-name! method name)
   (let* ((template (procedure-template method))

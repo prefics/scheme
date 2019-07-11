@@ -527,7 +527,7 @@
             make-frame frame-ref frame-previous frame-env frame-template frame-pc
 	    frame-set! set-frame-previous! set-frame-env! set-frame-template!
 	    set-frame-pc! frame-code frame-literals frame-debug frame-arguments
-	    frame-locals frame-length cc->frame for-each-frame
+	    frame-locals frame-length cc->frame for-each-stack-frame
 
             make-template template-code template-literals template-debug
             set-template-code! set-template-literals! set-template-debug!
