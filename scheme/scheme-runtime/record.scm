@@ -443,8 +443,8 @@
 
 (define-syntax defg
   (syntax-rules ()
-    ((defg ?name) (?args ...))
-    (define ?name (make-generic '?name '(?args ...)))))
+    ((defg (?name ?args ...))
+     (define ?name (make-generic '?name '(?args ...))))))
 
 (define (apply-meths meths args)
   (apply (car meths) (cons (lambda args (if (null? (cdr meths))
@@ -643,8 +643,8 @@
 
 (define-syntax defm
   (syntax-rules ()
-    ((defm ?name ?args . ?code)
-     (define-method ?name ?args . ?code))))
+    ((defm (?name ?arg ?args ...) . ?code)
+     (define-method ?name (?arg ?args ...) . ?code))))
 
 (define <generic>
   (let ((class (make-stob 7 <<class>>)))
