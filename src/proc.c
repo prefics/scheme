@@ -409,7 +409,7 @@ obj_t run(obj_t t, obj_t args)
           val = REF(VECTOR(literals)->val[BVEC(code_vector)->val[pc]])->value ;
 #ifdef SCHEMY_DEBUG_GLOBAL
 	  printf("Global '%s'",
-		 &STRING(REF(VECTOR(literals)->val[BVEC(code_vector)->val[pc]])->name)->ch[0]) ;
+		 &SYMBOL(REF(VECTOR(literals)->val[BVEC(code_vector)->val[pc]])->name)->ch[0]) ;
 	  fflush(NULL) ;
 #endif
 	  if (val == obj_unbound)
@@ -3738,7 +3738,7 @@ obj_t run(obj_t t, obj_t args)
 	    if (fixnump(val))
 	      {
 		obj_t ffi = make_bvec(sizeof(obj_t)) ;
-		int n = fixnum_value(val) ;
+		long n = fixnum_value(val) ;
 
 		memcpy(&BVEC(ffi)->val[0], &n, sizeof(obj_t)) ;
 		val = ffi ;
