@@ -443,8 +443,8 @@
 
 (define-syntax defg
   (syntax-rules ()
-    ((defg ?name) (?args ...))
-    (define ?name (make-generic '?name '(?args ...)))))
+    ((defg (?name ?args ...))
+     (define ?name (make-generic '?name '(?args ...))))))
 
 (define (apply-meths meths args)
   (apply (car meths) (cons (lambda args (if (null? (cdr meths))
@@ -557,6 +557,11 @@
   (and (= (length (method-specs method))
           (length (generic-args generic)))))
             
+(define (set-method-debug-name! method name)
+  (let* ((template (procedure-template method))
+         (debug (template-debug template)))
+    (if (vector? debug) (vector-set! debug 0 name))))
+
 (define (generic-add-method! generic method)
   (if (method-congruents? method generic)
       (let ((debug-name (generic-name generic)))
@@ -598,10 +603,6 @@
 
 (define (method-specs meth) (vector-ref (procedure-ref meth 0) 1))
 
-(define (set-method-debug-name! method name)
-  (let* ((template (procedure-template method))
-         (debug (template-debug template)))
-    (if (vector? debug) (vector-set! debug 0 name))))
 ;; Note: if you modify this syntax definition, you should also change
 ;; the same definition in bootstrap.scm
 (define-syntax define-method
@@ -685,7 +686,7 @@
 (define (spec-is-singleton? arg meths n)
   (and (pair? meths)
        (instance? (list-ref (method-specs (car meths)) n) <<singleton>>)))
-      
+
 (define (add-cache! n max args cache meths)
   ;;(display (list 'adding-cache n args cache meths)) (newline)
   (if (= n max)
