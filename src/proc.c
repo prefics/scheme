@@ -3410,7 +3410,7 @@ obj_t run(obj_t t, obj_t args)
           if (realp(val))
           {
             char buffer[48] ;
-            sprintf(buffer, "%10f", REAL(val)->value) ;
+            sprintf(buffer, "%.17g", REAL(val)->value) ;
 	    buffer[47] = '\0' ;
 
             val = make_string(strlen(buffer)+1) ;
