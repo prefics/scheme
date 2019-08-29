@@ -393,6 +393,7 @@
 	((vector? obj)  (write-vector obj port depth))
 	((null? obj)    (port-write-string port "()"))
 	((channel? obj) (write-chan obj port))
+        ((generic? obj) (write-generic obj port))
 	((procedure? obj) (write-procedure obj port))
 	((stob? obj)      (write-stob obj port))
 	((ref? obj) (write-ref obj port))
@@ -407,6 +408,12 @@
   (port-write-string port " ")
   (write-symbol (ref/module ref) port)
   (port-write-string port "}"))
+
+(define (write-generic gen port)
+  (let ((name (generic-name gen)))
+    (port-write-string port "#{generic ")
+    (port-write-string port (symbol->string name))
+    (port-write-string port "}")))
 
 (define (write-procedure proc port)
   (let* ((template (procedure-ref proc 1))
@@ -572,6 +579,12 @@
 	  (loop (+ i 1)))))
   (display "]" port))
 
+(define (display-generic gen port)
+  (let ((name (generic-name gen)))
+    (display "#{generic " port)
+    (display name port)
+    (display "}" port)))
+
 (define (display-procedure proc port)
   (let* ((template (procedure-ref proc 1))
 	 (debug (vector-ref template 2)))
@@ -617,6 +630,7 @@
 	   (display "}" port))
 	  ((vector? obj)    (display-vector obj port))
 	  ((bvec? obj)      (display-bvec obj port))
+          ((generic? obj)   (display-generic obj port))
 	  ((procedure? obj) (display-procedure obj port))
 	  ((stob? obj)      (display-stob obj port))
 	  ((ref? obj)       (display-ref obj port))

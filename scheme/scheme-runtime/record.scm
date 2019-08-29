@@ -473,7 +473,7 @@
 
 (define (generic? obj)
   (and (procedure? obj) (eq? (procedure-ref obj 1)
-			     (procedure-ref make-generic 1))))
+			     (procedure-ref $dummy-generic 1))))
 
 (define (generic-name gen)
   (let ((env (procedure-ref gen 0)))
@@ -498,8 +498,7 @@
   (display (class-of (car args))) (display (car (method-specs (car methods))))
   (display (eq? (class-of (car args)) (car (method-specs (car methods)))))
   (newline)
-)
-
+  )
 
 (define (set-generic-methods! generic methods)
   (vector-set! (procedure-ref generic 0) 1 methods))
@@ -737,6 +736,9 @@
             (vector-set! vec* i key)
             (vector-set! vec* (+ i 1) value)
             vec*)))))
+
+;; this is used in GENERIC?
+(define $dummy-generic (make-generic '$dummy-generic '(n)))
 
 ;;; Instance creation
 
