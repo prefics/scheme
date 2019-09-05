@@ -31,7 +31,8 @@ static obj_t *mem_alloc(int size) ;
 static int   symbolcmp (obj_t sym1, obj_t sym2) ;
 static void  mem_close_channels(void) ;
 static void  mem_grow_channels(void) ;
-
+static void  grow_symbol_table(void) ;
+static unsigned long symbol_hash(obj_t) ;
 
 static int num_channels = 10 ;
 static obj_t *channels ;
@@ -509,7 +510,28 @@ obj_t channelp(obj_t obj)
           HEADER_TYPE(*pointer_value(obj)) == header_channel) ;
 }
 
-obj_t symbol_table = obj_nil; /* ROOT */
+obj_t symbol_table ; /* ROOT */
+
+void grow_symbol_table(void)
+{
+  unsigned long len = HEADER_SIZE(*pointer_value(symbol_table))-1 ;
+  unsigned long new_len = 2*len ;
+  obj_t new_symbol_table = make_vector(new_len) ;
+
+  for (uintptr_t i = 0 ; i < new_len ; i++)
+    VECTOR(new_symbol_table)->val[i] = obj_false ;
+
+  for (uintptr_t i = 0 ; i < len ; i++)
+    {
+      obj_t symbol = VECTOR(symbol_table)->val[i] ;
+      unsigned long bucket = symbol_hash(symbol) % new_len ;
+      uintptr_t j ;
+      
+      for (j = bucket ; VECTOR(new_symbol_table)->val[j] != obj_false ; j=(j+1) % new_len) ;
+      VECTOR(new_symbol_table)->val[j] = symbol ;
+    }
+  symbol_table = new_symbol_table ;
+}
 
 int symbolcmp (obj_t sym1, obj_t sym2)
 {
@@ -517,31 +539,60 @@ int symbolcmp (obj_t sym1, obj_t sym2)
 		(char *)&SYMBOL(sym2)->ch[0]) ;
 }
 
+unsigned long symbol_hash(obj_t sym)
+{
+    unsigned long hash = 5381;
+    unsigned char *s = (unsigned char *)&SYMBOL(sym)->ch[0] ;
+    int c;
+
+    while (c = *s++)
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+
 obj_t intern(void)
 {
-  obj_t pair ;
+  unsigned long hash = symbol_hash(val) ;
+  unsigned long len = HEADER_SIZE(*pointer_value(symbol_table))-1 ;
+  uintptr_t start_index = hash % len ;
 
-  /*  printf("interning %s", &SYMBOL(symbol)->ch[0]) ; */
-  /*  write_obj(symbol_table) ; fflush(NULL) ; */
-  for (pair = symbol_table ;
-       pair != obj_nil && symbolcmp(val, PAIR(pair)->car) ;
-       pair = PAIR(pair)->cdr) ;
-
-  if (pair == obj_nil)
+  if (VECTOR(symbol_table)->val[start_index] == obj_false)
     {
-      obj_t new_table = make_pair ();
-
-      PAIR(new_table)->car = val ;
-      PAIR(new_table)->cdr = symbol_table ;
-      symbol_table = new_table ;
-      /*      printf(", new %lx\n", symbol) ; */
+      VECTOR(symbol_table)->val[start_index] = val ;
       return val ;
+    }
+  else if (!symbolcmp(val, VECTOR(symbol_table)->val[start_index]))
+    {
+      return VECTOR(symbol_table)->val[start_index] ;
     }
   else
     {
-      /*      printf("interning symbol: '%s', reusing '%s'\n", */
-      /*             &SYMBOL(val)->ch[0], &SYMBOL(PAIR(pair)->car)->ch[0]) ; */
-      return PAIR(pair)->car ;
+      uintptr_t i ;
+      
+      for (i = (start_index + 1) % len ; 
+	   i != start_index &&
+	   VECTOR(symbol_table)->val[i] != obj_false &&
+	   symbolcmp(val, VECTOR(symbol_table)->val[i]);
+	   i=(i+1) % len) ;
+
+      if (i == start_index)
+	{
+	  /* hash table full */
+	  grow_symbol_table() ;
+	  return intern() ;
+	}
+      else if (VECTOR(symbol_table)->val[i] == obj_false)
+	{
+	  /* We have found an empty bucket */
+	  VECTOR(symbol_table)->val[i] = val ;
+	  return val ;
+	}
+      else
+	{
+	  /* We have found the entry */
+	  return VECTOR(symbol_table)->val[i] ;
+	}
     }
 }
 
@@ -574,6 +625,14 @@ void mem_init(int heap_size)
   channels = (obj_t *) malloc (num_channels * (sizeof(obj_t))) ;
   for (i = 0 ; i < num_channels ; i++)
     channels[i] = obj_undefined ;
+
+  /* initialize symbol table */
+  symbol_table = make_vector(1027) ;
+
+  for (uint32_t i = 0 ; i < 1027 ; i++)
+    VECTOR(symbol_table)->val[i] = obj_false ;
+
+  /* test_hash() ; */
 }
 
 obj_t write_obj(obj_t obj)
