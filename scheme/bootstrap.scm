@@ -688,7 +688,7 @@
 
 	  instance? subtype? subclass?
 
-          let-keys
+          (let-keys :syntax)
           
 	  ;; fluids.scm
 	  fluid let-fluid set-fluid! make-fluid fluid?
