@@ -526,10 +526,11 @@
 (def-syntax 'define-init-action 'scheme-runtime
   (syntax-rules* '()
     '((define-init-action ?name (?depends ...) . ?do)
-      (set! *daemons* (cons (make-action '?name
-				       (list ?depends ...)
-				       (lambda () . ?do))
-			  *daemons*)))))
+      (let ((?name (lambda () . ?do)))
+        (add-init-action! (make-action '?name
+                                       (list ?depends ...)
+                                       ?name))
+        (?name)))))
 
 (def-syntax 'define-generic 'scheme-runtime
   (syntax-rules* '()

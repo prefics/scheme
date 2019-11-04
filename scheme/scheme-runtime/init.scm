@@ -14,10 +14,11 @@
 (define-syntax define-init-action
   (syntax-rules ()
     ((define-init-action ?name (?depends ...) . ?do)
-     (set! *daemons* (cons (make-action '?name 
-				      (list ?depends ...)
-				      (lambda () . ?do))
-			   *daemons*)))))
+     (let ((?name (lambda () . ?do)))
+       (add-init-action! (make-action '?name
+                                      (list ?depends ...)
+                                      ?name))
+       (?name)))))
 
 (define (add-init-action! action)
   (set! *daemons* (cons action *daemons*)))
