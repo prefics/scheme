@@ -276,8 +276,7 @@
         (lambda () 1)
         (lambda () (proc port))
         (lambda () 
-                                        ;          (display port)
-                                        ;          (if port (close-input-port port))
+          (close-input-port port)
           (set! port #f)))))
 
 (define (call-with-output-file string proc)
@@ -297,7 +296,7 @@
         (lambda () 1)
         (lambda () (let-fluid $current-input-port$ port proc))
         (lambda () 
-                                        ;          (close-input-port port)
+          (close-input-port port)
           (set! port #f)))))
 
 (define (with-output-to-file string proc)
@@ -307,7 +306,7 @@
         (lambda () 1)
         (lambda () (let-fluid $current-output-port$ port proc))
         (lambda () 
-                                        ;          (close-output-port port)
+          (close-output-port port)
           (set! port #f)))))
 
 (define (with-output-appended-to-file string proc)
@@ -317,7 +316,7 @@
         (lambda () 1)
         (lambda () (let-fluid $current-output-port$ port proc))
         (lambda () 
-                                        ;          (close-output-port port)
+          (close-output-port port)
           (set! port #f)))))
 
 (define (with-output-to-port port proc)

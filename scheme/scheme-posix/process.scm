@@ -48,7 +48,7 @@
 (define (run/file* proc)    (run/port* proc))
 (define (run/string* proc)  (port->string (run/port* proc)))
 (define (run/strings* proc) (port->string-list (run/port* proc)))
-(define (run/sexp* proc)    (read (run/port* proc)))
+(define (run/sexp* proc)    (read-and-close (run/port* proc)))
 (define (run/sexps* proc)   (port->sexp-list (run/port* proc)))
 
 (define (stringify obj)
@@ -69,8 +69,14 @@
    (let loop ((obj (reader port))
               (lst '()))
      (if (eof-object? obj)
-         lst
+         (begin (port-close port)
+                lst)
          (loop (reader port) (cons obj lst))))))
+
+(define (read-and-close port)
+  (let ((value (read port)))
+    (port-close port)
+    value))
 
 (define (stringify-list lst)
   (map stringify lst))
@@ -689,7 +695,7 @@
 
 (add-resource-provider default-resource-provider)
 
-(define-init-action 'set-resource-path ()
+(define-init-action set-resource-path ()
   (set! *resource-paths* (split #\: (or (getenv "SCHEMY_MODULE_PATH")
 					""))))
 
