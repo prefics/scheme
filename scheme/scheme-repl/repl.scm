@@ -507,7 +507,7 @@
 	  (begin (display ";; The file ") (display filename)
 		 (display " is not readable") (newline)))
       (begin (display ";; The file ") (display filename)
-	     (display "does not exist") (newline))))
+	     (display " does not exist") (newline))))
 
 (define-repl-command cm
   "Compile module"
@@ -789,21 +789,22 @@
       (repl))))
 
 (define (compiler-main args)
-  (let ((filenames #f))
-    (condition-case
-     (let loop ((filenames args))
-       (if (null? filenames)
-	   'done
-	   (begin
-	     (compile-module (car filenames))
-	     (loop (cdr filenames)))))
-     (<error>
-      (lambda (error)
-	(report-condition error)))
-     (<condition>
-      (lambda (c)
-	(report-condition c))))))
-
+  (condition-case
+   (let loop ((args args))
+     (if (null? args)
+         'done
+         (let ((arg (car args)))
+           (cond ((string=? arg "--resource-dir")
+                  (add-resource-path! (cadr args))
+                  (loop (cddr args)))
+                 (else (compile-module arg)
+                       (loop (cdr args)))))))
+   (<error>
+    (lambda (error)
+      (report-condition error)))
+   (<condition>
+    (lambda (c)
+      (report-condition c)))))
 
 (define (link! output-name entry/module entry/name fasls)
   (let ((initial-module (make-module 'scheme-user '()
@@ -847,6 +848,9 @@
 		   ((string=? arg "--fasl")
 		    (set! fasl (append fasl (list (cadr args))))
 		    (loop (cddr args)))
+                   ((string=? arg "--resource-dir")
+                    (add-resource-path! (cadr args))
+                    (loop (cddr args)))
 		   (else (set! fasl (append fasl (list arg)))
 			 (loop (cdr args)))))))
      (<error> (lambda (error) (report-condition error)))
