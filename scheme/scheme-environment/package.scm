@@ -42,7 +42,8 @@
    source-filename
 
    ;; system.scm
-   
+
+   all-systems all-system-names
    <system-definiton> system-definition?
    system-definition-name
    system-definition-version
@@ -57,13 +58,6 @@
 
    read-system-definition-from-file
    
-   <component>
-   <library-component> make-library-component library-component?
-   library-component-file-name
-
-   <files-component> make-files-component file-component?
-   files-component-file-names
-
    system-definition-paths
    add-system-path! remove-system-path!
    system-definitions
@@ -72,23 +66,39 @@
    remove-system-definition
    locate-system-in-directory
 
-   add-system remove-system
-   
-   compile-system
 
    load-system-from-definition
-   load-system force-load-system
+   force-load-system
 
+   add-system
+   remove-system
+   load-system
+   compile-system
    install-system
-
    package-system
-
    upload-system
 
+   <component>
+   <library-component> make-library-component library-component?
+   library-component-file-name
+
+   <files-component> make-files-component file-component?
+   files-component-file-names
+
+   <doc-component> make-doc-component doc-component?
+   doc-component-files
+
+   <test-component> make-test-component test-component?
+   test-component-files
+
+   <resource-component> make-resource-component resource-component?
+   resource-component-dir
+   
    compile-component
    load-component
    test-component
    install-component
+   uninstall-component
    package-component
    upload-component
 

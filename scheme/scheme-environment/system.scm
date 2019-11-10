@@ -58,27 +58,47 @@
   (make-component)
   component?)
 
-(define-record-type <library-component>
+(define-record-type (<library-component> <component>)
   (make-library-component file-name)
   library-component?
   (file-name library-component-file-name))
 
-(define-record-type <files-component>
+(define-record-type (<files-component> <component>)
   (make-files-component file-names)
   files-component?
   (file-names files-component-file-names))
 
-(define-record-type <doc-component>
+(define-record-type (<doc-component> <component>)
   (make-doc-component index-files)
   doc-component?
   (index-files doc-component-index-files
                set-doc-component-index-files))
 
+(define-record-type (<test-component> <component>)
+  (make-test-component files)
+  test-component?
+  (files test-component-files
+         set-test-component-files!))
+
+(define-record-type (<resource-component> <component>)
+  (make-resource-component dir)
+  resource-component?
+  (dir resource-component-dir
+       set-resource-component-dir!))
+
+(define (parse-library-component exp)
+  (let ((library-path (cadr exp)))
+    (if (not (string? library-path))
+        (error "library component is not a string"))
+    (make-library-component library-path)))
+
 (define (parse-component exp)
   (if (pair? exp)
       (let ((type (car exp)))
-	(cond ((eq? type 'library) (make-library-component (cadr exp)))
+	(cond ((eq? type 'library) (parse-library-component exp))
 	      ((eq? type 'files) (make-files-component (cdr exp)))
+              ((eq? type 'test) (make-test-component (cdr exp)))
+              ((eq? type 'resource) (make-resource-component (cadr exp)))
               ((eq? type 'doc) (make-doc-component (cdr exp)))
 	      (else (error "bad component type ~a" type))))))
 
@@ -90,6 +110,7 @@
 
 (define (system-bin-dir) (system-dir "bin/"))
 (define (system-doc-dir) (system-dir "doc/"))
+(define (system-share-dir) (system-dir "share/"))
 (define (system-src-dir) (system-dir "src/"))
 
 (define (ensure-local-repository!)
@@ -199,6 +220,11 @@
             (cons value (mapfilter proc (cdr lst)))
             (mapfilter proc (cdr lst))))))
 
+;;; Init part
+
+(define-init-action set-system-path ()
+  (add-resource-path! (system-dir "lib")))
+
 ;;;
 ;; returns a list of names as string of all available systems
 (define (all-system-names)
@@ -224,30 +250,37 @@
 
 ;;;
 ;; Add a system to the registry without loading it
-(define (add-system name)
+(define (add-system directory)
   (ensure-local-repository!)
   (let* ((dirname (file-name-as-directory (absolute-file-name (expand-file-name directory))))
          (system-file-name (string-append dirname "system.scm")))
     (if (file-exists? system-file-name)
         (let ((system (read-system-definition-from-file system-file-name)))
-          (create-symlink! directory
+          (create-symlink! dirname
                            (string-append (system-src-dir)
-                                          (symbol->string (system-definition-name system)))))
+                                          (symbol->string (system-definition-name system))))
+          (for-each (lambda (c) (install-component c system))
+                    (system-definition-components system)))
         (error "Directory ~a has no system file" dirname))))
 
 ;;;
 ;; Remove a system from the registry
 (define (remove-system name)
+  (ensure-local-repository!)
   (let ((file-name (string-append (system-src-dir)
                                   name)))
     (if (file-exists? file-name)
-        (begin
+        (let ((system (read-system-definition-from-file file-name)))
+          (for-each (lambda (c)
+                      (uninstall-component c system))
+                    (system-definition-components system))
           (delete-file! file-name))
         (error "System ~a does not exists" name))))
 
 ;;;
 ;; Compile a system 
 (define (compile-system system)
+  (ensure-local-repository!)
   (let ((system (->system-definition system)))
     (if system
         (let ((name (system-definition-name system))
@@ -317,7 +350,7 @@
          (system-file-name (string-append dirname "system.scm")))
     (if (file-exists? system-file-name)
         (let ((system (read-system-definition-from-file system-file-name)))
-          (create-symlink! directory
+          (create-symlink! dirname
                            (string-append (system-src-dir)
                                           (symbol->string (system-definition-name system))))
           (for-each (lambda (c) (install-component c system))
@@ -350,9 +383,11 @@
 (define-generic load-component (component system))
 (define-generic test-component (component system))
 (define-generic install-component (component system))
+(define-generic uninstall-component (component system))
 (define-generic package-component (component system))
 (define-generic upload-component (component system))
 
+;; default implementation
 (define-method compile-component ((c <component>) system)
   #f)
 (define-method load-component ((c <component>) system)
@@ -360,6 +395,12 @@
 (define-method test-component ((c <component>) system)
   #f)
 (define-method install-component ((c <component>) system)
+  #f)
+(define-method uninstall-component ((c <component>) system)
+  #f)
+(define-method package-component ((c <component>) system)
+  #f)
+(define-method upload-component ((c <component>) system)
   #f)
 
 (define-method install-component ((c <doc-component>) system)
@@ -378,14 +419,15 @@
 (define-method install-component ((c <files-component>) system)
   #f)
 
-(define-method package-component ((c <component>) system)
-  #f)
-(define-method upload-component ((c <component>) system)
+(define-method install-component ((c <test-component>) system)
   #f)
 
-(define-method compile-component ((c <library-component>) system)
-  (error "compilation not implemented"))
-
+(define-method load-component ((c <resource-component>) system)
+  (let ((dir (resource-component-dir c))
+        (sys-dir (file-name-directory (system-definition-file-name system))))
+    (display ";; adding resource path ") (display sys-dir) (newline)
+    (add-resource-path! (string-append sys-dir dir))))
+    
 (define-method load-component ((c <library-component>) system)
   (let ((directory (file-name-directory (system-definition-file-name system))))
     (display ";; changing directory to ") (display directory) (newline)
