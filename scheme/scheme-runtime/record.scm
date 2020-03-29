@@ -563,7 +563,7 @@
 
 (define (generic-add-method! generic method)
   (if (method-congruents? method generic)
-      (let ((debug-name (generic-name generic)))
+      (let ((debug-name (symbol->string (generic-name generic))))
         (set-method-debug-name! method debug-name)
         (set-generic-methods! generic
                               (add-method method
