@@ -3442,7 +3442,10 @@ obj_t run(obj_t t, obj_t args)
           val = realp(val) ? obj_true : obj_false ; NEXT ;
         BYTECODE(ROUND):
           if (realp(val))
-            val = make_fixnum((obj_t)REAL(val)->value) ;
+            {
+              double d = round(REAL(val)->value) ;
+              val = make_fixnum((obj_t)d) ;
+            }
           else if (fixnump(val))
             val = val ;
           else
@@ -3450,7 +3453,10 @@ obj_t run(obj_t t, obj_t args)
           NEXT ;
         BYTECODE(TRUNCATE):
           if (realp(val))
-            val = make_fixnum((obj_t)REAL(val)->value) ;
+            {
+              double d = trunc(REAL(val)->value) ;
+              val = make_fixnum((obj_t)d) ;
+            }
           else if (fixnump(val))
             val = val ;
           else
@@ -3458,7 +3464,10 @@ obj_t run(obj_t t, obj_t args)
           NEXT ;
         BYTECODE(CEILING):
           if (realp(val))
-            val = make_fixnum((obj_t)REAL(val)->value) ;
+            {
+              double d = ceil(REAL(val)->value) ;
+              val = make_fixnum((obj_t)d) ;
+            }
           else if (fixnump(val))
             val = val ;
           else
@@ -3466,7 +3475,10 @@ obj_t run(obj_t t, obj_t args)
           NEXT ;
         BYTECODE(FLOOR):
           if (realp(val))
-            val = make_fixnum((obj_t)REAL(val)->value) ;
+            {
+              double d = floor(REAL(val)->value) ;
+              val = make_fixnum((obj_t)d) ;
+            }
           else if (fixnump(val))
             val = val ;
           else
