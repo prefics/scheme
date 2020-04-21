@@ -225,8 +225,8 @@
 (define (compute-argument-depth code pc)
   (let ((word-ref
 	 (lambda (code i)
-	   (+ (* 256 (bvec-ref code pc))
-	      (bvec-ref code (+ pc 1))))))
+	   (+ (* 256 (bvec-ref code i))
+	      (bvec-ref code (+ i 1))))))
     (let find ((code code)
 	       (i 0))
       (cond

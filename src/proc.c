@@ -3410,7 +3410,12 @@ obj_t run(obj_t t, obj_t args)
           if (realp(val))
           {
             char buffer[48] ;
-            sprintf(buffer, "%.17g", REAL(val)->value) ;
+            /* sprintf(buffer, "%.17g", REAL(val)->value) ; */
+            /* This seems better to print REAL number:
+               (sqrt 2) => 1.414213562373095
+               (expt 10 -1) => 0.1
+            */
+            sprintf(buffer, "%0.16g", REAL(val)->value) ;
 	    buffer[47] = '\0' ;
 
             val = make_string(strlen(buffer)+1) ;
