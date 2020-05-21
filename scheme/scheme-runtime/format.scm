@@ -66,4 +66,5 @@
                      (loop port (+ index 1) args)))))))
     
 (define (format-to-string template . args)
-  (with-output-to-string (lambda () (apply format args))))
+  (with-output-to-string (lambda () (apply format (cons (current-output-port)
+                                                        (cons template args))))))
