@@ -512,21 +512,25 @@
 ;;;
 ;; Convert the integer `number` to a string. If `number` is not a
 ;; number the string ##NaN is returned.
-(define (number->string number)
-  (cond ((%fixnum? number)
-         (list->string
-          (let ((digits
-                 (reverse
-                  (let loop ((n (if (< number 0) (- 0 number) number)))
-                    (if (< n 10)
-                        (cons (integer->char (+ (char->integer #\0) n)) '())
-                        (let ((this (integer->char (+ (char->integer #\0)
-                                                      (modulo n 10))))
-                              (rest (loop (quotient n 10))))
+(define $digits "0123456789abcdefghijklmnopqrstuvwxyz")
+
+(define (number->string number . base)
+  (let ((base (if (null? base)
+                  10
+                  (car base))))
+    (cond ((%fixnum? number)
+           (list->string
+            (let ((digits
+                   (reverse
+                    (let loop ((n (if (< number 0) (- 0 number) number)))
+                      (if (< n base)
+                          (list (string-ref $digits n))
+                          (let ((this (string-ref $digits (modulo n base)))
+                                (rest (loop (quotient n base))))
                           (cons this rest)))))))
-            (if (< number 0) (cons #\- digits) digits))))
-        ((%real? number) (%real->string number))
-        (else "##NaN")))
+              (if (< number 0) (cons #\- digits) digits))))
+          ((%real? number) (%real->string number))
+          (else (error "Bad argument ~a to NUMBER->STRING, expected a number")))))
 
 ;;;
 ;; == Character procedures

@@ -48,9 +48,9 @@
     (k index (cdr args))))
 
 (define (format port template . args)
-  (let loop ((port (cond ((eq? port #t) (current-output-port))
-                         ((output-port? port) port)
-                         (else (current-output-port))))
+  (let loop ((port (if (eq? port #t)
+                       (current-output-port)
+                       port))
              (index 0)
              (args args))
     (if (< index (string-length template))
