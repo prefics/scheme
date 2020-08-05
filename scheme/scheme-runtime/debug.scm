@@ -219,7 +219,11 @@
 		   (env env))
 	  (if (= up 0)
 	      (cdr (vector->list env))
-	      (loop (- up 1) (vector-ref env 0))))
+              (loop (- up 1) (vector-ref env 0))))
+              ;; (let ((parent-env (vector-ref env 0)))
+              ;;   (if (vector? parent-env)
+              ;;       (loop (- up 1) parent-env)
+              ;;       '(error-in-frame-argument)))))
 	#f)))
 
 (define (compute-argument-depth code pc)

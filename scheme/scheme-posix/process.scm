@@ -29,9 +29,11 @@
     (cond (rc rc)
 	  ((fixnum? rc) (error "dup2 errno " rc))
 	  ((not rc) (retry rc)))))
-       
-(define (run/port* proc)
-  (let ((channels (posix-pipe)))
+
+(define (%posix-pipe) (posix-pipe))
+
+(define (run/port* proc port-thunk)
+  (let ((channels (%posix-pipe)))
     (if channels
         (let* ((in (car channels))
                (out (cdr channels))
@@ -41,15 +43,16 @@
 			   (port-dup out (make-channel 1))
 			   (proc)))))
           (close-channel out)
-          (wait process)
-          (channel->input-port in))
+          (let ((value (port-thunk (channel->input-port in))))
+            (wait process)
+            value))
         (posix-error "cannot call pipe"))))
 
-(define (run/file* proc)    (run/port* proc))
-(define (run/string* proc)  (port->string (run/port* proc)))
-(define (run/strings* proc) (port->string-list (run/port* proc)))
-(define (run/sexp* proc)    (read-and-close (run/port* proc)))
-(define (run/sexps* proc)   (port->sexp-list (run/port* proc)))
+(define (run/file* proc)    (run/port* proc (lambda (p) p)))
+(define (run/string* proc)  (run/port* proc port->string)))
+(define (run/strings* proc) (run/port* proc port->string-list))
+(define (run/sexp* proc)    (run/port* proc read-and-close))
+(define (run/sexps* proc)   (run/port* proc port->sexp-list))
 
 (define (stringify obj)
   (cond ((string? obj) obj)
