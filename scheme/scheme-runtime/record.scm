@@ -438,11 +438,15 @@
 
 (define-syntax define-generic
   (syntax-rules ()
+    ((define-generic ?name (?arg))
+     (define ?name (make-generic-1 '?name '(?arg))))
     ((define-generic ?name (?args ...))
      (define ?name (make-generic '?name '(?args ...))))))
 
 (define-syntax defg
   (syntax-rules ()
+    ((defg (?name ?arg))
+     (define ?name (make-generic-1 '?name '(?arg))))
     ((defg (?name ?args ...))
      (define ?name (make-generic '?name '(?args ...))))))
 
@@ -470,6 +474,29 @@
 		  (begin
 		    (add-cache! 0 argmax args cache sorted)
 		    (apply-meths sorted args)))))))))
+
+(define (make-generic-1 name formals)
+  (let ((argmax (length formals))
+	(cache (make-empty-cache 0))
+	(methods '()))
+    (lambda (arg)
+      (let ((entry (or (lookup-entries 0 1 arg '() (cache-singletons cache))
+                       (lookup-entries 0 1 (class-of arg) '() (cache-classes cache)))))
+	(if entry
+	    ((car entry) (lambda (arg*) (if (null? (cdr meths))
+                                            (error "no more next methods")
+                                            (apply-meths (cdr meths) (list arg*))))
+             arg)
+	    (let* ((meths (applicable-methods methods (list arg)))
+		   (sorted (sorted-applicable-methods meths)))
+	      (if (null? sorted)
+		  (begin
+		    (debug-generic name (list arg) cache methods meths sorted)
+		    (error "no applicable method for ~a with ~a" name arg
+			   cache methods))
+		  (begin
+		    (add-cache! 0 argmax (list arg) cache sorted)
+		    (apply-meths sorted (list arg))))))))))
 
 (define (generic? obj)
   (and (procedure? obj) (eq? (procedure-ref obj 1)
