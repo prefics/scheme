@@ -250,18 +250,32 @@
 
 ;;;
 ;; Add a system to the registry without loading it
-(define (add-system directory)
+(define (finish-adding-system dirname system-file-name)
+  (if (not (string=? "system.scm" (file-name-nondirectory system-file-name)))
+      (error "system file name ~a is not named system.scm" system-file-name))
+  (if (not (file-exists? system-file-name))
+      (error "system file name ~a does not exists" system-file-name))
+  (if (not (file-readable? system-file-name))
+      (error "system file ~a is not readable" system-file-name))
+  
+  (let ((system (read-system-definition-from-file system-file-name)))
+    (create-symlink! dirname
+                     (string-append (system-src-dir)
+                                    (symbol->string (system-definition-name system))))
+    (for-each (lambda (c) (install-component c system))
+              (system-definition-components system))))
+
+(define (add-system name)
   (ensure-local-repository!)
-  (let* ((dirname (file-name-as-directory (absolute-file-name (expand-file-name directory))))
-         (system-file-name (string-append dirname "system.scm")))
-    (if (file-exists? system-file-name)
-        (let ((system (read-system-definition-from-file system-file-name)))
-          (create-symlink! dirname
-                           (string-append (system-src-dir)
-                                          (symbol->string (system-definition-name system))))
-          (for-each (lambda (c) (install-component c system))
-                    (system-definition-components system)))
-        (error "Directory ~a has no system file" dirname))))
+  (cond ((file-directory? name)
+	 (let* ((dirname (file-name-as-directory (absolute-file-name (expand-file-name name))))
+		(system-file-name (string-append dirname "system.scm")))
+	   (finish-adding-system dirname system-file-name)))
+	((file-regular? name)
+	 (let ((dirname (file-name-directory (absolute-file-name (expand-file-name name))))
+	       (system-file-name (absolute-file-name (expand-file-name name))))
+	   (finish-adding-system dirname system-file-name)))
+	(else (error "Don't know how to add system from ~a" name))))
 
 ;;;
 ;; Remove a system from the registry
