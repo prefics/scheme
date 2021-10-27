@@ -534,6 +534,8 @@
 
 (def-syntax 'define-generic 'scheme-runtime
   (syntax-rules* '()
+    '((define-generic ?name (?arg))
+      (define ?name (make-generic-1 '?name '(?arg))))
     '((define-generic ?name (?args ...))
       (define ?name (make-generic '?name '(?args ...))))))
 
@@ -966,17 +968,17 @@
 
 (define *compiler-sig* '(compile&go compile-only compile syntax-expand
                          assembler make-syntax-env
-                         define-syntax? define-syntax/expr define-syntax/name
-                         lambda? lambda/formals lambda/body
-                         if? if/exp if/then if/else
-                         set!? set!/lhs set!/rhs
-                         let? let/bindings let/body
-                         application? app/operator app/operands
-                         literal? literal/val
-                         begin? begin/body
-                         letrec? letrec/bindings letrec/body
-                         scoped? scoped/uid scoped/name
-                         primitive-call? primitive-call/name primitive-call/args
+                         make-define-syntax define-syntax? define-syntax/expr define-syntax/name
+                         make-lambda lambda? lambda/formals lambda/body
+                         make-if if? if/exp if/then if/else
+                         make-set! set!? set!/lhs set!/rhs
+                         make-let let? let/bindings let/body
+                         make-application application? app/operator app/operands
+                         make-literal literal? literal/val
+                         make-begin begin? begin/body
+                         make-letrec letrec? letrec/bindings letrec/body
+                         make-scoped scoped? scoped/uid scoped/name
+                         make-primitive-call primitive-call? primitive-call/name primitive-call/args
                          return-continuation write-type write-fasl!
                          type/syntax type/define type/expr type/module
                          read-fasl read-type))

@@ -65,12 +65,12 @@
 
 (define (floor x)
   (cond ((%real? x) (%floor x))
-        ((fixnum? x) x)
+        ((%fixnum? x) x)
         (else (error "FLOOR expects a number, got ~a" x))))
 
 (define (ceiling x)
   (cond ((%real? x) (%ceiling x))
-        ((fixnum? x) x)
+        ((%fixnum? x) x)
         (else (error "CEILING expects a number, got ~a" x))))
 
 (define (truncate x)

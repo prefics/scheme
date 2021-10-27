@@ -219,14 +219,18 @@
 		   (env env))
 	  (if (= up 0)
 	      (cdr (vector->list env))
-	      (loop (- up 1) (vector-ref env 0))))
+              (loop (- up 1) (vector-ref env 0))))
+              ;; (let ((parent-env (vector-ref env 0)))
+              ;;   (if (vector? parent-env)
+              ;;       (loop (- up 1) parent-env)
+              ;;       '(error-in-frame-argument)))))
 	#f)))
 
 (define (compute-argument-depth code pc)
   (let ((word-ref
 	 (lambda (code i)
-	   (+ (* 256 (bvec-ref code pc))
-	      (bvec-ref code (+ pc 1))))))
+	   (+ (* 256 (bvec-ref code i))
+	      (bvec-ref code (+ i 1))))))
     (let find ((code code)
 	       (i 0))
       (cond

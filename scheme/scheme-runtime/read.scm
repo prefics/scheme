@@ -59,8 +59,8 @@
 	    (else 
              (read-char real-port)
              (read-error! (string-append "Unrecognized start of token >"
-				(make-string 1 c)
-				"<")))))))
+                                         (make-string 1 c)
+                                         "<")))))))
 
 (define (read-symbol/number port)
   (let* ((first (read-char port))
@@ -145,7 +145,7 @@
           ((char=? c #\|) (read-block-comment #\| port))
           ((char=? c #\#) (read-port-attribute port))
 	  ((char=? c #\<) (read-here-string-maybe port))
-          (else (read-error! "Unknown character ~a for # syntax" c)))))
+          (else (read-error! "Unknown character for # syntax")))))
 
 (define (read-commented-exp port)
   (let ((comment (read port)))
@@ -181,7 +181,7 @@
 	   ((char=? c #\newline) (let ((_ (read-char port))) '()))
 	   ((< (char->integer c) (char->integer #\space))
 	    (let ((_ (read-char port))) (loop (peek-char port))))
-	   (else (read-error! "Bad character ~a used in here string" c))))))
+	   (else (read-error! "Bad character used in here string"))))))
 
 (define (read-port-attribute port)
   (let ((attribute (read-word port)))
