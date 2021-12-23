@@ -684,6 +684,7 @@
 
           <nil> <undefined> <unbound> <eof> <bool> <number> <real>
           <string> <integer> <char> <channel>
+          <collection> <sequence> <list>
           <vector> <byte-vector> <pair> <closure> <symbol> <ref>
 	  record-type-name record-type-supers record-type-direct-slots
 	  record-type-slots record-type-methods record-type-ancestors

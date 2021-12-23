@@ -412,6 +412,7 @@
             (defm :syntax)
             
 	    <nil> <undefined> <unbound> <eof> <bool> <number> <integer>
+            <collection> <sequence> <list>
             <real> <string> <char> <channel>
 	    <vector> <byte-vector> <pair> <closure> <symbol> <ref>
 	    record-type-name record-type-supers record-type-direct-slots
