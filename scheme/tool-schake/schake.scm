@@ -225,9 +225,11 @@
 					 (load-library-definition lib)))))
     (target-add load-lib-name load-lib-target)))
 
+(define (make-module-target . args) (error "not implemented"))
+
 (define (add-library-to-compile-target lib)
   (let* ((compile-lib-name (make-target-name "compile:" (library-definition-name lib)))
-	 (deps-files (map (lambda (fn) (make-file-target fn '() "source file"
+	 (deps-file (map (lambda (fn) (make-file-target fn '() "source file"
 							 (lambda () #f)
 							 fn))
 			  (library-definition-files lib)))

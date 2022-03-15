@@ -73,7 +73,7 @@
 
 (define (remove-library-definition library)
   (if (library-definition? library)
-      (set! *library-definitions* (remq library *library-definitions*))
+      (set! *library-definitions* (delq library *library-definitions*))
       (error "object ~a is not a library definition" library)))
 
 (define (lookup-library-definition name)

@@ -700,7 +700,7 @@
 	  ;; io.scm
 	  <port> port-read-char port-peek-char port-read-line port-write-char
 	  port-write-string port-close port-name port-position set-port-position!
-	  <channel-port>
+	  <channel-port> make-channel-port channel-port? channel-port-channel
 	  <string-port> output-string
 	  open-input-string-port open-output-string-port
 	  input-port? output-port? call-with-input-file call-with-output-file

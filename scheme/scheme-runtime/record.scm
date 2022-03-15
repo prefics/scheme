@@ -7,8 +7,8 @@
        ?pred
        (?field ?getter . ?setter) ...)
      (begin
-       ;;(define-record-type* '?type (list ?inherit ...) '(?field ...))
-       (define ?type (make-record-type '?type (list ?inherit ...) '(?field ...)))
+       (define-record-type* '?type (list ?inherit ...) '(?field ...))
+       ;;(define ?type (make-record-type '?type (list ?inherit ...) '(?field ...)))
        (define ?pred (make-record-pred ?type))
        (define ?constructor (lambda (?args ...)
 			      (let ((rec (make-record ?type)))
@@ -22,8 +22,8 @@
        ?pred
        (?field ?getter . ?setter) ...)
      (begin
-       ;;(define-record-type* '?type (list <top>) '(?field ...))
-       (define ?type (make-record-type '?type (list <top>) '(?field ...)))
+       (define-record-type* '?type (list <top>) '(?field ...))
+       ;;(define ?type (make-record-type '?type (list <top>) '(?field ...)))
        (define ?pred (make-record-pred ?type))
        (define ?constructor (lambda (?args ...)
 			      (let ((rec (make-record ?type)))
@@ -33,19 +33,27 @@
 	 (define-record-field type ?field ?getter . ?setter) ...)))))
 
 (define (define-record-type* name parents fields)
+  ;;(display (list 'defining-record-type name parents fields (current-module-name))) (newline)
   (let* ((type (make-record-type name parents fields))
 	 (cm (or (current-module-name) (error "No current module setted")))
 	 (binding (lookup-ref name cm))
 	 (value (and binding (ref/value binding))))
-    (display ";; redefining type") (newline)
-    (if (record-type? value)
-	(if (not (record-type=? type value))
-	    ;; Ok the type is different, so set it
-	    (begin
-	      (set-ref/value! binding type)
-	      (set-record-type-methods! type (record-type-methods value))))
+    ;;(display (list 'define-type binding value)) (newline)
+    (if binding
+	(if (record-type? value)
+	    (if (not (record-type=? type value))
+		;; Ok the type is different, so set it
+		(begin
+		  (set-ref/value! binding type)
+		  (set-record-type-methods! type (record-type-methods value))))
+	    (set-ref/value! binding type))
 	;; OK the type is new, so just bind it
-	(bind-ref! name type (current-module)))))
+	(begin
+	  (bind-ref! name type (current-module))
+	  ;;(display "Binding new type") (newline)
+     ))
+    ;;(display (list 'end-def-type (lookup-ref name cm))) (newline) 
+    ))
 
 (define (record-type=? t1 t2)
   (and

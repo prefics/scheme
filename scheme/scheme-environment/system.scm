@@ -4,10 +4,10 @@
   (make-system-definition name version author
 			  file-name parents description components)
   system-definition?
-  (name         system-definition-name         set-system-definition-name!)
-  (version      system-definition-version      set-system-definition-version!)
-  (author       system-definition-author       set-system-definition-author!)
-  (file-name    system-definition-file-name    set-system-definition-file-name!)
+  (name         system-definition-name       set-system-definition-name!)
+  (version      system-definition-version    set-system-definition-version!)
+  (author       system-definition-author     set-system-definition-author!)
+  (file-name    system-definition-file-name  set-system-definition-file-name!)
   (parents     system-definition-parents     set-system-definition-parents!)
   (description system-definition-description set-system-definition-description!)
   (components  system-definition-components  set-system-definition-components!))
@@ -34,7 +34,7 @@
 	      (let ((directive (car def)))
 		(cond ((and (pair? directive)
 			    (eq? (car directive) 'parents))
-		       (set-system-definition-parent! system (cdr directive)))
+		       (set-system-definition-parents! system (cdr directive)))
 		      ((and (pair? directive)
 			    (eq? (car directive) 'description))
 		       (set-system-definition-description! system (cadr directive)))
@@ -181,9 +181,9 @@
 (define (remove-system-definition name)
   (let ((system (->system-definition name)))
     (if system
-        (let ((directory-path (system-definition-path (system-definition-file-name system))))
+        (let ((directory-path (file-name-directory (system-definition-file-name system))))
           (remove-resource-path! directory-path)
-          (set! *system-definitions* (remq system *system-definitions*)))
+          (set! *system-definitions* (delq system *system-definitions*)))
         (error ";; System ~a does not exists in the registry" name))))
 
 (define (locate-system-in-directory dir name)

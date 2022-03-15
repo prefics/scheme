@@ -304,7 +304,7 @@
                                (procedure-set! proc 1 fasl)
 ;                               (display ".")
                                (bind-syntax! symbol
-                                             (make-syntax (proc)
+                                             (make-syntax (with-current-module module proc)
                                                           (module/syntax module))
                                              module)
 ;                               (display "*")
@@ -314,7 +314,7 @@
                                     (proc (make-procedure 2)))
                                (procedure-set! proc 0 'undefined)
                                (procedure-set! proc 1 fasl)
-                               (proc)
+                               (with-current-module module proc)
                                (loop (read-type port))))
                             ((= type type/module)
                              (let* ((name (read-fasl port))
@@ -364,7 +364,7 @@
                          (procedure-set! proc 0 'undefined)
                          (procedure-set! proc 1 assembled)
                          (bind-syntax! (define-syntax/name expanded-exp)
-                                       (make-syntax (proc)
+                                       (make-syntax (with-current-module module proc)
                                                     (module/syntax module))
                                        module)))
                      (let* ((compiled-exp (compile expanded-exp '() ""
@@ -375,7 +375,7 @@
                        (write-fasl! assembled-exp fasl-port)
                        (procedure-set! proc 0 'undefined)
                        (procedure-set! proc 1 assembled-exp)
-                       (proc)))
+                       (with-current-module module proc)))
 ;                 (newline stdout)
                  (loop (read)))
                (<condition>
@@ -384,7 +384,8 @@
                   (report-condition condition))))))))))
 
 (define (compile-file* fasl-port module filenames)
-  (for-each (lambda (filename) (compile-file fasl-port module filename))
+  (for-each (lambda (filename)
+	      (compile-file fasl-port module filename))
             filenames))
 
 (define-repl-command expand

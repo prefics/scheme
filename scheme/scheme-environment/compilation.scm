@@ -1,5 +1,8 @@
 ;;; compilation.scm -- compilation support
 
+(define (ensure-module-loaded! name)
+  (error "ensure-module-loaded! not implemented"))
+
 (define (compile-file fasl-port module filename)
   (let* ((stdout (current-output-port)))
     (with-cwd* (file-name-directory filename)
@@ -45,7 +48,7 @@
 		     (loop (read)))
 		   (<condition>
 		    (lambda (condition)
-		      (report-condition condition))))))))))))
+		      (display "Error: ") (write condition) (newline))))))))))))
 
 (define (compile-file* fasl-port module filenames)
   (for-each (lambda (filename) (compile-file fasl-port module filename))
@@ -66,7 +69,7 @@
 					      ".fasl")))
 		  (call-with-output-file module-fasl-filename
 		    (lambda (module-fasl-port)
-		      (with-cwd* (file-name-directory file-name)
+		      (with-cwd* (file-name-directory filename)
                         (lambda ()
 			  (bind-module! name module)
 			  (let loop ((def (cddr module-def)))

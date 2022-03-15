@@ -2,8 +2,8 @@
 
 (define-structure tool-schake
   (export
-   <target> make-target target? target-name target-doc target-dependents
-   target-script
+   <target> make-target target?
+   target-name target-doc target-dependents target-script
 
    target-needs-update?
    target-modification-time
@@ -12,6 +12,7 @@
 
    targets target-names targets-clear! the-target with-target
    target-ref target-add target-delete ->target target-run target-exists?
+   target-update
    (deftarget :syntax) $always $never
 
    <target-file> make-file-target file-target-file-name

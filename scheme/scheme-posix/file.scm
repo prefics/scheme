@@ -121,8 +121,10 @@
 ;;;
 ;; Sync the file associated with the specified `port`.
 (define (sync-file! port)
-  (let ((errno (posix-sync (port->channel port))))
-    errno))
+  (if (channel-port? port)
+      (let ((errno (posix-sync (channel-port-channel port))))
+	errno)
+      (error "PORT in not a channel port")))
 
 ;;;
 ;; Sync the complete file system on the machine.

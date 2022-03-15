@@ -36,7 +36,7 @@
 (define (create-socket family type protocol)
   (let ((channels (posix-socket family type)))
     (cond ((pair? channels) (make-socket family type #f (car channels) (cdr channels)))
-	  ((number? channels) (posix-error "Error during socket creation, code=~a" channel))
+	  ((number? channels) (posix-error "Error during socket creation, code=~a" channels))
 	  (else (posix-error "Unknown error during socket creation")))))
 	   
 ;;;
@@ -268,12 +268,12 @@
          (info* (posix-host-info info name/address)))
     (if (host-info? info*) 
         info
-        (case info*
-          (($herror/host-not-found) (signal (make-host-not-found-error name/address)))
-          (($herror/try-again)      (signal (make-try-again-error name/address)))
-          (($herror/no-recovery)    (signal (make-no-recovery-error name/address)))
-          (($herror/no-data)        (signal (make-no-data-error name/address)))
-          (($herror/no-addresses)   (signal (make-no-addresses-error name/address)))
+        (cond
+          ((= info* $herror/host-not-found) (signal (make-host-not-found-error name/address)))
+          ((= info* $herror/try-again)      (signal (make-try-again-error name/address)))
+          ((= info* $herror/no-recovery)    (signal (make-no-recovery-error name/address)))
+          ((= info* $herror/no-data)        (signal (make-no-data-error name/address)))
+          ((= info* $herror/no-addresses)   (signal (make-no-addresses-error name/address)))
           (else (error "HOST-INFO: unknown host error ~a" info*))))))
 
 (define (network-info name/address)

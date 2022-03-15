@@ -27,7 +27,7 @@
 (define (port-dup ch1 ch2)
   (let retry ((rc (posix-dup2 ch1 ch2)))
     (cond (rc rc)
-	  ((fixnum? rc) (error "dup2 errno " rc))
+	  ((integer? rc) (error "dup2 errno " rc))
 	  ((not rc) (retry rc)))))
 
 (define (%posix-pipe) (posix-pipe))
@@ -349,7 +349,7 @@
 ;;;
 ;; Sends `signal` to `process`.
 (define (signal-process process signal)
-  (let ((pid (if (process? process) (process-pid process) process)))
+  (let ((pid (if (process? process) (process/pid process) process)))
     (if (not (number? pid)) (error "bad pid argument to SIGNAL-PROCESS: ~a" pid))
     (if (not (number? signal)) (error "bad signal argument to SIGNAL-PROCESS: ~a" signal))
     (posix-kill pid signal)))
