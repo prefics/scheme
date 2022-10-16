@@ -31,13 +31,22 @@
                   less?)))))
 
 (define (delq element lst)
-  (filter (lambda (e) (eq? e element)) lst))
+  (cond ((null? lst) lst)
+	((and (pair? lst) (eq? element (car lst)))
+	 (delq element (cdr lst)))
+	(else (cons (car lst) (delq element (cdr lst))))))
 
 (define (delv element lst)
-  (filter (lambda (e) (eqv? e element)) lst))
+  (cond ((null? lst) lst)
+	((and (pair? lst) (eqv? element (car lst)))
+	 (delq element (cdr lst)))
+	(else (cons (car lst) (delq element (cdr lst))))))
 
 (define (delete element lst)
-  (filter (lambda (e) (equal? e element)) lst))
+  (cond ((null? lst) lst)
+	((and (pair? lst) (equal? element (car lst)))
+	 (delq element (cdr lst)))
+	(else (cons (car lst) (delq element (cdr lst))))))
 
 (define (posq element lst)
   (let find ((lst lst)

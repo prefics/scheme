@@ -346,6 +346,33 @@
 
 (define-syntax define-alien-entry
   (syntax-rules ()
+    ((define-alien-entry (?name a1) ?type ?lib ?entry)
+     (define ?name
+       (let ((entry (register-alien-entry! ?entry ?lib)))
+	 (lambda (a1)
+	   (make-alien-value (%ffi-apply (alien-entry-handle entry)
+					 (list (scheme->alien a1)))
+			     ?type)))))
+
+    ((define-alien-entry (?name a1 a2) ?type ?lib ?entry)
+     (define ?name
+       (let ((entry (register-alien-entry! ?entry ?lib)))
+	 (lambda (a1 a2)
+	   (make-alien-value (%ffi-apply (alien-entry-handle entry)
+					 (list (scheme->alien a1)
+					       (scheme->alien a2)))
+			     ?type)))))
+       
+    ((define-alien-entry (?name a1 a2 a3) ?type ?lib ?entry)
+     (define ?name
+       (let ((entry (register-alien-entry! ?entry ?lib)))
+	 (lambda (a1 a2 a3)
+	   (make-alien-value (%ffi-apply (alien-entry-handle entry)
+					 (list (scheme->alien a1)
+					       (scheme->alien a2)
+					       (scheme->alien a3)))
+			     ?type)))))
+
     ((define-alien-entry (?name ?args ...) ?type ?lib ?entry)
      (define ?name
        (let ((entry (register-alien-entry! ?entry ?lib)))
