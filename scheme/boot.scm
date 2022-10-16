@@ -241,7 +241,7 @@
                       (let ((proc (make-procedure 2)))
                         (message "d")
                         ;		    (write-channel *stdout* fasl)
-                        (procedure-set! proc 0 'undefined)
+                        (procedure-set! proc 0 (make-vector 1 'undefined))
                         (procedure-set! proc 1 fasl)
                         ;		    (write-channel *stdout* proc)
                         (proc)
@@ -254,7 +254,7 @@
                         (let ((proc (make-procedure 2)))
                           (message "s")
                           ;		    (write-channel *stdout* fasl)
-                          (procedure-set! proc 0 'undefined)
+                          (procedure-set! proc 0 (make-vector 1 'undefined))
                           (procedure-set! proc 1 fasl)
                           ;		    (write-channel *stdout* proc)
 			  (bind-syntax! symbol
@@ -269,7 +269,7 @@
                       (let ((proc (make-procedure 2)))
                         (message "e")
                         ;		    (write-channel *stdout* fasl)
-                        (procedure-set! proc 0 'undefined)
+                        (procedure-set! proc 0 (make-vector 1 'undefined))
                         (procedure-set! proc 1 fasl)
                         ;		    (write-channel *stdout* proc)
                         (proc)
@@ -410,7 +410,7 @@
 
 	    (define-method :syntax) method-specs
             (defm :syntax)
-            
+
 	    <nil> <undefined> <unbound> <eof> <bool> <number> <integer>
             <collection> <sequence> <list>
             <real> <string> <char> <channel>
@@ -422,7 +422,7 @@
 	    instance? subtype? subclass?
 
             (let-keys :syntax)
-            
+
 	    ;; fluids.scm
 	    fluid let-fluid set-fluid! make-fluid fluid?
 
@@ -656,7 +656,7 @@
       system-machine
 
       add-resource-path! remove-resource-path!
-      
+
       ;; file.scm
       create-directory! create-fifo! create-hard-link! create-symlink!
       delete-directory! delete-file! delete-filesys-object!
@@ -717,7 +717,7 @@
       date-year set-date-year! date-tz-name set-date-tz-name!
       date-tz-secs set-date-tz-secs! date-summer? set-date-summer!
       date-week-day set-date-week-day! date-year-day set-date-year-day!
-      date 
+      date
       time time-seconds time-milliseconds make-time
       time- time+ time=? time<? time<=? time>=? time>? time/=?
       time->number number->time seconds->time time->seconds
@@ -900,12 +900,3 @@
                 (ref-value (lookup-ref '*boot*
                                        'scheme-runtime))))
 )
-
-
-
-
-
-
-
-
-

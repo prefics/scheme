@@ -108,7 +108,7 @@
 (define (report-condition error)
   (display "CONDITION: ")
   (display (record-type-name (class-of error))) (newline)
-  (cond 
+  (cond
    ((unbound-global-error? error)
     (let ((var (unbound-global-error-variable error)))
       (display "Unbound global ") (display (ref/name var))
@@ -182,7 +182,7 @@
 	   (display-time (time- end start))
 	   (newline))
 	 (<condition> (lambda (c) (report-condition c)))))))
-	 
+
 (define (load-file filename module)
   (if (file-readable? filename)
       (with-input-from-file filename
@@ -287,11 +287,11 @@
               (lambda (port)
                 (let loop ((type (read-type port)))
                   (if (eof-object? type)
-                      'done-load-fasl 
+                      'done-load-fasl
                       (cond ((= type type/define)
                              (let* ((fasl (read-fasl port))
                                     (proc (make-procedure 2)))
-                               (procedure-set! proc 0 'undefined)
+                               (procedure-set! proc 0 (vector 'undefined))
                                (procedure-set! proc 1 fasl)
                                (proc)
                                (loop (read-type port))))
@@ -300,7 +300,7 @@
                              (let* ((symbol (read-fasl port))
                                     (fasl (read-fasl port))
                                     (proc (make-procedure 2)))
-                               (procedure-set! proc 0 'undefined)
+                               (procedure-set! proc 0 (vector 'undefined))
                                (procedure-set! proc 1 fasl)
 ;                               (display ".")
                                (bind-syntax! symbol
@@ -312,7 +312,7 @@
                             ((= type type/expr)
                              (let* ((fasl (read-fasl port))
                                     (proc (make-procedure 2)))
-                               (procedure-set! proc 0 'undefined)
+                               (procedure-set! proc 0 (vector 'undefined))
                                (procedure-set! proc 1 fasl)
                                (with-current-module module proc)
                                (loop (read-type port))))
@@ -361,7 +361,7 @@
                        (write-fasl! (define-syntax/name expanded-exp) fasl-port)
                        (write-fasl! assembled fasl-port)
                        (let ((proc (make-procedure 2)))
-                         (procedure-set! proc 0 'undefined)
+                         (procedure-set! proc 0 (vector 'undefined))
                          (procedure-set! proc 1 assembled)
                          (bind-syntax! (define-syntax/name expanded-exp)
                                        (make-syntax (with-current-module module proc)
@@ -373,7 +373,7 @@
                             (proc (make-procedure 2)))
                        (write-type type/expr fasl-port)
                        (write-fasl! assembled-exp fasl-port)
-                       (procedure-set! proc 0 'undefined)
+                       (procedure-set! proc 0 (vector 'undefined))
                        (procedure-set! proc 1 assembled-exp)
                        (with-current-module module proc)))
 ;                 (newline stdout)
@@ -814,7 +814,7 @@
 				     "User Module"
 				     '() 'scheme-user)))
     (for-each (lambda (f)
-		(display ";; loading fasl ") 
+		(display ";; loading fasl ")
 		(display f)
 		(load-fasl f)
 		(newline))
@@ -856,7 +856,7 @@
 			 (loop (cdr args)))))))
      (<error> (lambda (error) (report-condition error)))
      (<condition> (lambda (c) (report-condition c))))))
-	
+
 
 (define (script-main args)
   (let* ((script-name #f)
@@ -894,4 +894,3 @@
       (lambda (c)
 	(report-condition error)
 	(newline))))))
-

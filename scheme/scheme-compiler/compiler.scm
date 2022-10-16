@@ -46,7 +46,7 @@
 				  return-continuation))
 	       (assembled (assembler compiled module))
 	       (proc (make-procedure 2)))
-	  (procedure-set! proc 0 'undefined-env)
+	  (procedure-set! proc 0 (vector 'undefined-env))
 	  (procedure-set! proc 1 assembled)
 	  (bind-syntax! (define-syntax/name expanded)
 			(make-syntax (proc) (module/syntax module))

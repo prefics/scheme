@@ -54,7 +54,7 @@
 		      ((= type type/define)
 		       (let* ((fasl (read-fasl port))
 			      (proc (make-procedure 2)))
-			 (procedure-set! proc 0 'undefined)
+			 (procedure-set! proc 0 (vector 'undefined))
 			 (procedure-set! proc 1 fasl)
 			 (proc)
 			 (loop (read-type port) module)))
@@ -63,7 +63,7 @@
 			   (let* ((symbol (read-fasl port))
 				  (fasl (read-fasl port))
 				  (proc (make-procedure 2)))
-			     (procedure-set! proc 0 'undefined)
+			     (procedure-set! proc 0 (vector 'undefined))
 			     (procedure-set! proc 1 fasl)
 					;                               (display ".")
 			     (bind-syntax! symbol
@@ -76,7 +76,7 @@
 		      ((= type type/expr)
 		       (let* ((fasl (read-fasl port))
 			      (proc (make-procedure 2)))
-			 (procedure-set! proc 0 'undefined)
+			 (procedure-set! proc 0 (vector 'undefined))
 			 (procedure-set! proc 1 fasl)
 			 (proc)
 			 (loop (read-type port) module)))
@@ -129,4 +129,3 @@
 		    filename
                     (loop (cdr paths))))))
 	#f)))
-
