@@ -24,12 +24,12 @@ void usage(void)
          "[--disable-profiling] disable generation of profiling data\n"
          "[--profile-filename=FILENAME] specify filename of profiling data\n"
          "[--sampling-rate=XXX] define the sampling rate in [micros] for profiling\n"
-	 
+
 	 "[--help]\n") ;
   exit(0) ;
 }
 
-static 
+static
 int strprefix(char *s, char *p)
 {
   int i ;
@@ -49,7 +49,10 @@ int main(int argc, char *argv[])
   int heap_size = DEFAULT_HEAP_SIZE ;
   char *image_file = NULL ;
   char *fasl_file = NULL ;
-  
+
+  if (getenv("SCHEMY_HEAP_SIZE"))
+    heap_size = atoi(getenv("SCHEMY_HEAP_SIZE")) ;
+
   for (i=1 ; i < argc ; i++)
     {
       if (strcmp(argv[i], "--image") == 0)
@@ -65,7 +68,6 @@ int main(int argc, char *argv[])
       else if (strcmp(argv[i], "--heap-size") == 0)
 	{
 	  heap_size = atoi(argv[i+1]) ;
-          printf("Setting heap size to %d", heap_size) ;
 	  i += 1 ;
 	}
       else if (strcmp(argv[i], "--help") == 0)
@@ -99,11 +101,11 @@ int main(int argc, char *argv[])
           opt_sampling_rate = atoi(&argv[i][16]) ;
         }
       else
-        break ; 
+        break ;
     }
 
   mem_init(heap_size) ;
-  
+
   if (image_file)
     {
       obj_t clos = load_image(image_file) ;
@@ -128,7 +130,7 @@ int main(int argc, char *argv[])
     }
   else
     {
-      printf("You need to specify at least a FASL file to load or an image file to resume\n") ;
+      printf("Error: You need to specify at least a FASL file to load or an image file to resume\n") ;
       exit(1) ;
     }
 
@@ -138,7 +140,7 @@ int main(int argc, char *argv[])
     {
       obj_t arg = make_string(strlen(argv[i]) +1) ;
       obj_t pair ;
-      
+
       strcpy(&STRING(arg)->ch[0], argv[i]) ;
       pair = make_pair() ;
       PAIR(pair)->car = arg ;
@@ -147,7 +149,7 @@ int main(int argc, char *argv[])
     }
   init_profiling() ;
   ret = run(template, args) ;
-  /*  write_obj(ret) ; 
+  /*  write_obj(ret) ;
    *  printf("\n") ;
    */
   stop_profiling() ;
