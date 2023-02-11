@@ -14,6 +14,10 @@
   (value alien-value-value)
   (type  alien-value-type))
 
+(define (alien-value? obj) (and (record? obj) (eq? (record-type obj) <alien-value>)))
+(define (alien-value-value alien) (record-ref alien 'value))
+(define (alien-value-type alien) (record-ref alien 'type))
+
 (define (malloc type)
   (let ((size (sizeof type)))
     (make-alien-value (%ffi-deref (%ffi-malloc size) 0 size)
@@ -371,6 +375,29 @@
 					 (list (scheme->alien a1)
 					       (scheme->alien a2)
 					       (scheme->alien a3)))
+			     ?type)))))
+
+    ((define-alien-entry (?name a1 a2 a3 a4) ?type ?lib ?entry)
+     (define ?name
+       (let ((entry (register-alien-entry! ?entry ?lib)))
+	 (lambda (a1 a2 a3 a4)
+	   (make-alien-value (%ffi-apply (alien-entry-handle entry)
+					 (list (scheme->alien a1)
+					       (scheme->alien a2)
+					       (scheme->alien a3)
+					       (scheme->alien a4)))
+			     ?type)))))
+
+    ((define-alien-entry (?name a1 a2 a3 a4 a5) ?type ?lib ?entry)
+     (define ?name
+       (let ((entry (register-alien-entry! ?entry ?lib)))
+	 (lambda (a1 a2 a3 a4 a5)
+	   (make-alien-value (%ffi-apply (alien-entry-handle entry)
+					 (list (scheme->alien a1)
+					       (scheme->alien a2)
+					       (scheme->alien a3)
+					       (scheme->alien a4)
+					       (scheme->alien a5)))
 			     ?type)))))
 
     ((define-alien-entry (?name ?args ...) ?type ?lib ?entry)

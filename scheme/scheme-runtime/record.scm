@@ -470,6 +470,11 @@
 			   args)))
 
 (define (make-generic name formals)
+  (let ((generic (make-anonymous-generic name formals)))
+    (vector-set! (template-debug (procedure-ref generic 1)) 0 (symbol->string name))
+    generic))
+
+(define (make-anonymous-generic name formals)
   (let ((argmax (length formals))
 	(cache (make-empty-cache 0))
 	(methods '()))
@@ -489,6 +494,11 @@
 		    (apply-meths sorted args)))))))))
 
 (define (make-generic-1 name formals)
+  (let ((generic (make-anonymous-generic-1 name formals)))
+    (vector-set! (template-debug (procedure-ref generic 1)) 0 (symbol->string name))
+    generic))
+
+(define (make-anonymous-generic-1 name formals)
   (let ((argmax (length formals))
 	(cache (make-empty-cache 0))
 	(methods '()))
