@@ -210,8 +210,14 @@ extern obj_t symbolp(obj_t obj) ;
 extern obj_t make_symbol(int size) ;
 
 extern obj_t symbol_table ; /* ROOT */
+extern obj_t classes ; /* ROOT */
 
 extern obj_t write_obj(obj_t obj) ;
+
+extern obj_t mem_class_of(obj_t) ;
+extern void mem_set_classes(obj_t) ;
+extern obj_t mem_instancep(obj_t, obj_t) ;
+extern obj_t mem_subtypep(obj_t, obj_t) ;
 
 extern obj_t *mem_start ;
 extern obj_t *mem_end ;

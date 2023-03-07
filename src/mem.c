@@ -37,6 +37,8 @@ static unsigned long symbol_hash(obj_t) ;
 static int num_channels = 10 ;
 static obj_t *channels ;
 
+obj_t classes ;
+
 void print_backtrace(void)
 {
   obj_t frame ;
@@ -68,6 +70,7 @@ void mem_gc(void)
      write_obj(code_vector) ;
   */
 
+  mem_mark(&classes) ;
   mem_mark(&symbol_table) ;
 
   mem_mark(&val) ;
@@ -632,7 +635,7 @@ void mem_init(int heap_size)
   for (uint32_t i = 0 ; i < 1027 ; i++)
     VECTOR(symbol_table)->val[i] = obj_false ;
 
-  /* test_hash() ; */
+  classes = obj_false ;
 }
 
 obj_t write_obj(obj_t obj)
@@ -925,6 +928,8 @@ void mem_update(void)
   a3            = mem_reloc(a3) ;
   a4            = mem_reloc(a4) ;
 
+  classes       = mem_reloc(classes) ;
+  
   int i ;
   for (i = 0 ; i < num_channels ; i++)
     if (channels[i] != obj_undefined)
@@ -1064,4 +1069,169 @@ void mem_close_channels()
 	}
       /* printf("\n") ; */
     }
+}
+
+enum {
+  FIXNUM_OFFSET, REAL_OFFSET, STRING_OFFSET, CHAR_OFFSET, CHANNEL_OFFSET,
+  VECTOR_OFFSET, BVEC_OFFSET, PAIR_OFFSET, DUMMY_OFFSET, DUMMY1_OFFSET, GENERIC_OFFSET,
+  CLOSURE_OFFSET, SYMBOL_OFFSET, REF_OFFSET, NULL_OFFSET, BOOL_OFFSET,
+  EOF_OFFSET, UNBOUND_OFFSET, UNDEFINED_OFFSET,
+  TOP_OFFSET, CLASS_OFFSET, UNION_OFFSET, SINGLETON_OFFSET, SUBCLASS_OFFSET } ;
+
+static int genericp(obj_t object)
+{
+  return closurep(object) &&
+    (CLOSURE(object)->val[1] == VECTOR(classes)->val[DUMMY_OFFSET] ||
+     CLOSURE(object)->val[1] == VECTOR(classes)->val[DUMMY1_OFFSET]) ;
+}
+
+obj_t mem_class_of(obj_t object)
+{
+  if (stobp(object)) return STOB(object)->class ;
+  else if (fixnump(object)) return VECTOR(classes)->val[FIXNUM_OFFSET] ;
+  else if (realp(object)) return VECTOR(classes)->val[REAL_OFFSET] ;
+  else if (stringp(object)) return VECTOR(classes)->val[STRING_OFFSET] ;
+  else if (charp(object)) return VECTOR(classes)->val[CHAR_OFFSET] ;
+  else if (channelp(object)) return VECTOR(classes)->val[CHANNEL_OFFSET] ;
+  else if (vectorp(object)) return VECTOR(classes)->val[VECTOR_OFFSET] ;
+  else if (bvecp(object)) return VECTOR(classes)->val[BVEC_OFFSET] ;
+  else if (pairp(object)) return VECTOR(classes)->val[PAIR_OFFSET] ;
+  else if (genericp(object)) return VECTOR(classes)->val[GENERIC_OFFSET] ;
+  else if (closurep(object)) return VECTOR(classes)->val[CLOSURE_OFFSET] ;
+  else if (symbolp(object)) return VECTOR(classes)->val[SYMBOL_OFFSET] ;
+  else if (refp(object)) return VECTOR(classes)->val[REF_OFFSET] ;
+  else if (object == obj_nil) return VECTOR(classes)->val[NULL_OFFSET] ;
+  else if (object == obj_true) return VECTOR(classes)->val[BOOL_OFFSET] ;
+  else if (object == obj_false) return VECTOR(classes)->val[BOOL_OFFSET] ;
+  else if (object == obj_eof) return VECTOR(classes)->val[EOF_OFFSET] ;
+  else if (object == obj_unbound) return VECTOR(classes)->val[UNBOUND_OFFSET] ;
+  else if (object == obj_undefined) return VECTOR(classes)->val[UNDEFINED_OFFSET] ;
+  else return obj_false ;
+}
+
+void mem_set_classes(obj_t vector)
+{
+  classes = vector ;
+}
+
+obj_t mem_type_class_p(obj_t) ;
+obj_t mem_type_union_p(obj_t) ;
+obj_t mem_type_subclass_p(obj_t) ;
+obj_t mem_type_singleton_p(obj_t) ;
+
+obj_t mem_type_class_p(obj_t t)
+{
+  return stobp(t) && STOB(t)->class == VECTOR(classes)->val[CLASS_OFFSET] ;
+}
+
+obj_t mem_type_union_p(obj_t t)
+{
+  return stobp(t) && STOB(t)->class == VECTOR(classes)->val[UNION_OFFSET] ;
+}
+
+obj_t mem_type_subclass_p(obj_t t)
+{
+  return stobp(t) && STOB(t)->class == VECTOR(classes)->val[SUBCLASS_OFFSET] ;
+}
+
+obj_t mem_type_singleton_p(obj_t t)
+{
+  return stobp(t) && STOB(t)->class == VECTOR(classes)->val[SINGLETON_OFFSET] ;
+}
+
+obj_t mem_subtypep(obj_t, obj_t) ;
+obj_t mem_instancep(obj_t, obj_t) ;
+obj_t mem_subclass_p(obj_t, obj_t) ;
+
+obj_t mem_any_subtype(obj_t, obj_t) ;
+
+obj_t mem_any_subtype(obj_t t, obj_t ts)
+{
+  for (obj_t e = ts ; e != obj_nil ; e = PAIR(e)->cdr)
+    if (mem_subtypep(t, ts)) return obj_true ;
+  return obj_false ;
+}
+
+obj_t mem_subclass_p(obj_t t1, obj_t t2)
+{
+  if (t1 == t2) return obj_true ;
+  if (t2 == VECTOR(classes)->val[TOP_OFFSET]) return obj_true ;
+  for (obj_t e = STOB(t1)->slot[5]; e != obj_nil ; e = PAIR(e)->cdr)
+    if (t2 == PAIR(e)->car) return obj_true ;
+  return obj_false ;
+}
+
+obj_t mem_subtype_class_p(obj_t t1, obj_t t2)
+{
+  if (mem_type_class_p(t2)) return mem_subclass_p(t1, t2) ;
+  else if (mem_type_singleton_p(t2)) return obj_false ;
+  else if (mem_type_union_p(t2)) return mem_any_subtype(t1, STOB(t2)->slot[0]) ;
+  else if (mem_type_subclass_p(t2))
+    {
+      if (t1 == VECTOR(classes)->val[CLASS_OFFSET] && STOB(t2)->slot[0] == VECTOR(classes)->val[CLASS_OFFSET])
+	return obj_true ;
+      else
+	return obj_false ;
+    }
+
+  return obj_false ;
+}
+
+obj_t mem_subtype_singleton_p(obj_t t1, obj_t t2)
+{
+  if (mem_type_singleton_p(t2) && STOB(t1)->slot[0] == STOB(t2)->slot[0])
+    return obj_true ;
+  else if (mem_type_class_p(t2)) return mem_instancep(STOB(t1)->slot[0], t2) ;
+  else if (mem_type_subclass_p(t2) &&
+	   mem_instancep(STOB(t1)->slot[0], VECTOR(classes)->val[CLASS_OFFSET]) == obj_true)
+    return mem_subclass_p(STOB(t1)->slot[0], STOB(t2)->slot[0]);
+  else if (mem_type_union_p(t2)) return mem_any_subtype(t1, STOB(t2)->slot[0]) ;
+  else return obj_false ;
+}
+
+obj_t mem_subtype_union_p(obj_t t1, obj_t t2)
+{
+  for (obj_t e = STOB(t1)->slot[0] ; e != obj_nil ; e = PAIR(e)->cdr)
+    if (mem_subtypep(PAIR(e)->car, t2) == obj_false)
+      return obj_false ;
+  return obj_true ;
+}
+
+obj_t mem_subtype_subclass_p(obj_t t1, obj_t t2)
+{
+  if (mem_type_class_p(t2)) return mem_subclass_p(VECTOR(classes)->val[CLASS_OFFSET], t2) ;
+  if (mem_type_singleton_p(t2)) return obj_false ;
+  if (mem_type_subclass_p(t2)) return mem_subclass_p(STOB(t1)->slot[0], STOB(t2)->slot[0]) ;
+  if (mem_type_union_p(t2)) return mem_any_subtype(t1, STOB(t2)->slot[0]) ;
+  return obj_false ;
+}
+
+obj_t mem_instancep(obj_t obj, obj_t t)
+{
+  if (mem_type_class_p(t)) return mem_subtypep(mem_class_of(obj), t) ;
+  if (mem_type_singleton_p(t) && obj == STOB(t)->slot[0]) return obj_true ;
+  if (mem_type_union_p(t))
+    {
+      for (obj_t e = STOB(t)->slot[0] ; e != obj_nil ; e = PAIR(e)->cdr)
+	if (mem_instancep(obj, PAIR(e)->car) == obj_false)
+	  return obj_false ;
+      return obj_true ;
+    }
+  if (mem_type_subclass_p(t))
+    {
+      if (mem_type_class_p(obj))
+	return mem_subtypep(obj, STOB(t)->slot[0]) ;
+      else
+	return obj_false ;
+    }
+  return obj_false ;
+}
+
+obj_t mem_subtypep(obj_t t1, obj_t t2)
+{
+  if (mem_type_class_p(t1)) return mem_subtype_class_p(t1, t2) ;
+  if (mem_type_singleton_p(t1)) return mem_subtype_singleton_p(t1, t2) ;
+  if (mem_type_union_p(t1)) return mem_subtype_union_p(t1, t2) ;
+  if (mem_type_subclass_p(t1)) return mem_subtype_subclass_p(t1, t2) ;
+  return obj_false ;
 }

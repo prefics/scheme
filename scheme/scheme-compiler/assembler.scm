@@ -302,7 +302,7 @@
               
               %sqrt %expt %native-call %channel-flush	      
 	      %host-error %error=? %set-timer %posix-symlink %posix-readlink
-              %random a a a a a a))
+              %random %class-of %set-classes %instance? %subtype? a a))
 	 (p 0))
       (if (null? opcode) 
 	  hash

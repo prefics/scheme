@@ -50,7 +50,8 @@ obj_t load_image(char *filename)
       mem_free = image.free ;
       restart = image.restart ;
       symbol_table = image.symbol_table ;
-
+      classes = image.classes ;
+      
       rc = host_read_channel(f, mem_start, 0, image.size * sizeof(obj_t)) ;
       
       if (rc != image.size * sizeof(obj_t))
@@ -62,9 +63,11 @@ obj_t load_image(char *filename)
 
       if (tag(symbol_table) == tag_pointer)
         symbol_table += sizeof(obj_t)*(mem_start-start) ;
-      if(tag(restart) == tag_pointer) 
+      if (tag(restart) == tag_pointer) 
         restart += sizeof(obj_t)*(mem_start-start) ;
-
+      if (tag(classes) == tag_pointer)
+	classes += sizeof(obj_t)*(mem_start-start) ;
+      
       mem_free += (mem_start-start) ;
 
       host_close_channel(f) ;
@@ -104,6 +107,7 @@ void save_image(obj_t filename, obj_t restart)
       image.free    = mem_free ;
       image.restart = restart ;
       image.symbol_table = symbol_table ;
+      image.classes = classes ;
           
       rc = host_write_channel(f, &image, 0, sizeof(image_t)) ;
       if (rc != sizeof(image_t))

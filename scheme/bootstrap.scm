@@ -369,6 +369,11 @@
 
 (define-nullary-primitive '%random)
 
+(define-unary-primitive '%class-of)
+(define-unary-primitive '%set-classes)
+(define-binary-primitive '%instance?)
+(define-binary-primitive '%subtype?)
+
 ;;; Predefined syntax
 
 (define (append! l1 e)

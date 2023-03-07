@@ -225,7 +225,7 @@
     rec))
 
 (define (record-type? obj)
-  (and (record? obj) (eq? (record-type obj) <<class>>)))
+  (and (stob? obj) (eq? (stob-class obj) <<class>>)))
 
 (define (make-record-pred type) (lambda (obj) (instance? obj type)))
 
@@ -410,27 +410,33 @@
 
 (define (subclass? c1 c2)
   (if (and (record-type? c1) (record-type? c2))
-      (and (memq c2 (record-type-ancestors c1)) #t)
+      (or (eq? c2 <top>) (eq? c1 c2) (memq c2 (record-type-ancestors c1)))
       (error "wrong argument to subclass, not classes ~a and ~a" c1 c2)))
 
+(define (%subclass? c1 c2)
+  (or (eq? c1 c2) (eq? c2 <top>) (memq c2 (record-type-ancestors c1))))
+
 (define (subtype-class? t1 t2)
-  (cond ((record-type? t2) (subclass? t1 t2))
+  (cond ((record-type? t2) (%subclass? t1 t2))
 	((type-singleton? t2) #f)
 	((type-subclass? t2) (and (eq? t1 <<class>>)
 				  (eq? (type-class t2) <<class>>)))
+	((type-union? t2) (any? (lambda (t) (subtype? t1 t)) (union-types t2)))
 	(else #f)))
 
 (define (subtype-singleton? t1 t2)
   (cond ((record-type? t2) (instance? (type-object t1) t2))
-	((type-singleton? t2) (eq? (type-object t1) t2))
+	((type-singleton? t2) (eq? (type-object t1) (type-object t2)))
 	((type-subclass? t2) (and (instance? (type-object t1) <<class>>)
 				  (subclass? (type-object t1) (type-class t2))))
+	((type-union? t2) (any? (lambda (t) (subtype? t1 t)) (union-types t2)))
 	(else #f)))
 
 (define (subtype-subclass? t1 t2)
   (cond
    ((type-singleton? t2) #f)
    ((type-subclass? t2) (subclass? (type-class t1) (type-class t2)))
+   ((type-union? t2) (any? (lambda (t) (subtype? t1 t)) (union-types t2)))
    (else #f)))
 
 (define (subtype-union? t1 t2)
@@ -444,7 +450,6 @@
    ((type-singleton? t1) (subtype-singleton? t1 t2))
    ((type-union? t1) (subtype-union? t1 t2))
    ((type-subclass? t1) (subtype-subclass? t1 t2))
-   ((type-union? t1) (subtype-union? t1 t2))
    (else (error "bad arguments to subtype? ã ~a" t1 t2))))
 
 ;;; Generic
@@ -568,9 +573,9 @@
 		    (args args))
     (if (null? types)
 	#t
-	(and (pair? args)
-	     (instance? (car args) (car types))
-	     (applicable? (cdr types) (cdr args))))))
+	(if (%instance? (car args) (car types))
+	    (applicable? (cdr types) (cdr args))
+	    #f))))
 
 (define (method-more-specific? m1 m2)
   (let specific? ((s1 (method-specs m1))
@@ -579,7 +584,7 @@
         (if (null? s2)
 	    #t
 	    (error "incongruent methods ~a and ~a" m1 m2))
-        (and (subtype? (car s1) (car s2))
+        (and (%subtype? (car s1) (car s2))
              (specific? (cdr s1) (cdr s2))))))
 
 (define (sorted-applicable-methods meths)
@@ -840,3 +845,36 @@
      (let* ((props ?props)
             (?name (key-ref props '?name ?init)) ...)
        . ?code))))
+
+;; 
+
+(%set-classes (vector <integer>
+		      <real>
+		      <string>
+		      <char>
+		      <channel>
+		      <vector>
+		      <byte-vector>
+		      <pair>
+		      (procedure-ref $dummy-generic 1)
+		      (procedure-ref $dummy-generic-1 1)
+		      <generic>
+		      <closure>
+		      <symbol>
+		      <ref>
+		      <nil>
+		      <bool>
+		      <eof>
+		      <unbound>
+		      <undefined>
+
+		      <top>
+		      <<class>>
+		      <<union>>
+		      <<singleton>>
+		      <<subclass>>))
+
+(define (class-of obj) (%class-of obj))
+
+(define (subtype? t1 t2) (%subtype? t1 t2))
+(define (instance? obj type) (%instance? obj type))

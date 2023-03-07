@@ -283,8 +283,8 @@ obj_t run(obj_t t, obj_t args)
 
     &&ZSQRT,&&ZEXPT,
     &&NATIVE_CALL,&&CHANNEL_FLUSH,&&HOSTERROR,&&HOSTSAMEERROR,
-    &&SETTIMER,&&UNIX_SYMLINK,&&UNIX_READLINK,&&RANDOM,&&BADCODE,&&BADCODE,&&BADCODE,
-    &&BADCODE,&&BADCODE,&&BADCODE
+    &&SETTIMER,&&UNIX_SYMLINK,&&UNIX_READLINK,&&RANDOM,&&CLASSOF,&&SETCLASSES,&&INSTANCE,
+    &&SUBTYPE,&&BADCODE,&&BADCODE
   } ;
 #endif
   val = obj_undefined ;
@@ -4072,6 +4072,30 @@ obj_t run(obj_t t, obj_t args)
             val = random32() ;
             NEXT ;
           }
+	BYTECODE(CLASSOF):
+	  {
+	    val = mem_class_of(val) ;
+	    NEXT;
+	  }
+	BYTECODE(SETCLASSES):
+	  {
+	    mem_set_classes(val) ;
+	    NEXT;
+	  }
+	BYTECODE(INSTANCE):
+	  {
+	    a1 = val ;
+	    a2 = pop() ;
+	    val = mem_instancep(a1, a2) ;
+	    NEXT ;
+	  }
+	BYTECODE(SUBTYPE):
+	  {
+	    a1 = val ;
+	    a2 = pop() ;
+	    val = mem_subtypep(a1, a2) ;
+	    NEXT ;   
+	  }
 #ifdef INDIRECT_THREADED_CODE
         BYTECODE(BADCODE):
           printf("Unknown byte code\n") ;
