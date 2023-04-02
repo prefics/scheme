@@ -57,15 +57,20 @@
    make-empty-system-definition
 
    read-system-definition-from-file
+
+   system-dir system-bin-dir system-doc-dir
+   system-share-dir system-src-dir
    
    system-definition-paths
    add-system-path! remove-system-path!
    system-definitions
+
+   ->system-definition
    lookup-system-definition
    add-system-definition
    remove-system-definition
    locate-system-in-directory
-
+   locate-system
 
    load-system-from-definition
    force-load-system
@@ -75,6 +80,7 @@
    load-system
    compile-system
    install-system
+   test-system
    package-system
    upload-system
 
