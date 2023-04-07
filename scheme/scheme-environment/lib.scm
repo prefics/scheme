@@ -18,7 +18,9 @@
       (let* ((definition (with-input-from-file file-name (lambda () (read))))
 	     (lib-def (parse-library-definition definition)))
 	(set-library-definition-file-name! lib-def
-                                           (string-append (cwd) file-name)))
+                                           (if (file-name-absolute? file-name)
+                                               file-name
+                                               (string-append (cwd) file-name))))
       (error "file name ~a not readable" file-name)))
 
 (define (parse-library-definition sexp)
