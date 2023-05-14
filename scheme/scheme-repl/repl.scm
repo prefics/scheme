@@ -742,32 +742,36 @@
 (define (repl)
   (call-with-current-continuation
    (lambda (quit)
-     (let loop ()
-       (call-with-current-continuation
-	(lambda (abort)
-	  (with-signal-hook
-	   (let ((myself (current-thread)))
-	     (lambda ()
-	       (thread-interrupt! myself
-				  (lambda ()
-				    (display ";; Interrupt")
-				    (newline)
-				    (abort #f)))))
-	   (lambda ()
-	     (let ((module (fluid $current-module$)))
-	       (display (module/name module))
-	       (display "> ")
-	       (let ((fnb-char (first-non-blank)))
-		 (if (eof-object? fnb-char)
-		     (quit 123)
-		     (begin
-		       (if (char=? fnb-char #\,)
-			   (read/execute-command)
-			   (evaluate))))))))))
-       (loop))))
+     (with-out-of-memory (lambda ()
+                           (newline)
+                           (display ";; Out of memory !")
+                           (newline))
+       (lambda ()
+         (let loop ()
+           (call-with-current-continuation
+	    (lambda (abort)
+	      (with-signal-hook
+	       (let ((myself (current-thread)))
+	         (lambda ()
+	           (thread-interrupt! myself
+				      (lambda ()
+				        (display ";; Interrupt")
+				        (newline)
+				        (abort #f)))))
+	       (lambda ()
+	         (let ((module (fluid $current-module$)))
+	           (display (module/name module))
+	           (display "> ")
+	           (let ((fnb-char (first-non-blank)))
+		     (if (eof-object? fnb-char)
+		         (quit 123)
+		         (begin
+		           (if (char=? fnb-char #\,)
+			       (read/execute-command)
+			       (evaluate))))))))))
+           (loop))))))
   (display "Thank you for using Schemy")
   (newline))
-
 
 (define (display-module m)
   (display "Module: ") (display (module/name m)) (newline)

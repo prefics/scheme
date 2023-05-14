@@ -35,25 +35,36 @@
 (define (remove-init-action! action)
   (set! *daemons*
         (let loop ((daemons *daemons*))
-          (if (null? daemons) 
+          (if (null? daemons)
               '()
               (let ((daemon (car daemons)))
                 (cond ((and (action? action) (eq? action daemon))
                        (loop (cdr daemons)))
                       ((and (symbol? action) (eq? (action-name daemon) action))
                        (loop (cdr daemons)))
-                      (else (cons daemon (loop (cdr daemons))))))))))           
-        
+                      (else (cons daemon (loop (cdr daemons))))))))))
+
 (define (init-actions) (append *daemons* '()))
 
 (define (init-action-exists? action)
   (let loop ((daemons *daemons*))
-    (if (null? daemons) 
+    (if (null? daemons)
         '()
         (let ((daemon (car daemons)))
           (or (and (action? action) (eq? action daemon))
               (and (symbol? action) (eq? (action-name daemon) action))
               (loop (cdr daemons)))))))
+
+;;; Out of memory handling
+
+(define (with-out-of-memory handler proc)
+  (if (suspend-cc (lambda (k)
+                    (let ((traps (vector-ref k 12)))
+                      (vector-set! traps trap/out-of-memory
+                                   (cons k (vector-ref traps trap/out-of-memory)))
+                      (resume-cc k #f))))
+      (handler))
+  (proc))
 
 ;;; The initial boot process
 
@@ -91,6 +102,3 @@
 (define (save-image-file filename top)
   (set! *top* top)
   (save-image filename *boot*))
-		  
-	
-	     

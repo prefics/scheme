@@ -73,7 +73,6 @@ static obj_t new_stack(void) ;
 static void push(obj_t) ;
 static obj_t pop(void) ;
 static obj_t suspend_cc(void) ;
-static void resume_cc(obj_t) ;
 static int unroll_list(void) ;
 
 static obj_t random32(void) ;
@@ -156,7 +155,6 @@ obj_t suspend_cc(void)
   return cc ;
 }
 
-static
 void resume_cc(obj_t cc)
 {
   obj_t old = VECTOR(cc)->val[1] ;
@@ -464,7 +462,7 @@ obj_t run(obj_t t, obj_t args)
 	BYTECODE(TAIL):
           if (do_sample_profile)
             profiler_sample() ;
-          
+
 	  if (closurep(val))
 	    {
 	      /* call closure */
@@ -581,7 +579,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
 		}
-	      else 
+	      else
 		{
 		  TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 		}
@@ -624,7 +622,7 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1+v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}	      
+		}
 	      else
 		{
 		  TRAP2(TRAP_PRIMITIVE, a1, a2) ;
@@ -693,7 +691,7 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1-v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}	      
+		}
 	      else
 		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
@@ -727,7 +725,7 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1/v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}		
+		}
 	      else if (bvecp(a2))
 		{
 		  obj_t v1 = *(obj_t *)&BVEC(a1)->val[0] ;
@@ -735,8 +733,8 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1/v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}	      
-	      else 
+		}
+	      else
 		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else
@@ -769,7 +767,7 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1%v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}		
+		}
 	      else if (bvecp(a2))
 		{
 		  obj_t v1 = *(obj_t *)&BVEC(a1)->val[0] ;
@@ -777,8 +775,8 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1%v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}	      
-	      else 
+		}
+	      else
 		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else
@@ -811,7 +809,7 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1%v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}		
+		}
 	      else if (bvecp(a2))
 		{
 		  obj_t v1 = *(obj_t *)&BVEC(a1)->val[0] ;
@@ -819,8 +817,8 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1%v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}	      
-	      else 
+		}
+	      else
 		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else
@@ -882,7 +880,7 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1*v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}	      
+		}
 	      else
 		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
@@ -950,7 +948,7 @@ obj_t run(obj_t t, obj_t args)
 		  obj_t res = v1/v2 ;
 		  val = make_bvec(sizeof(obj_t)) ;
 		  memcpy(&BVEC(val)->val[0], &res, sizeof(obj_t)) ;
-		}	      
+		}
 	      else
 		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
@@ -972,7 +970,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = fixnum_value(a1) < v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (realp(a1))
 	    {
@@ -986,7 +984,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = REAL(a1)->value < v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (bvecp(a1))
 	    {
@@ -1029,7 +1027,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = fixnum_value(a1) <= v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (realp(a1))
 	    {
@@ -1043,7 +1041,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = REAL(a1)->value <= v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (bvecp(a1))
 	    {
@@ -1086,7 +1084,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = fixnum_value(a1) == v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (realp(a1))
 	    {
@@ -1100,7 +1098,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = REAL(a1)->value == v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (bvecp(a1))
 	    {
@@ -1143,7 +1141,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = fixnum_value(a1) > v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (realp(a1))
 	    {
@@ -1157,7 +1155,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = REAL(a1)->value > v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (bvecp(a1))
 	    {
@@ -1200,7 +1198,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = fixnum_value(a1) >= v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (realp(a1))
 	    {
@@ -1214,7 +1212,7 @@ obj_t run(obj_t t, obj_t args)
 		  val = REAL(a1)->value < v2 ? obj_true : obj_false ;
 		}
 	      else
-		TRAP2(TRAP_PRIMITIVE, a1, a2) ;		
+		TRAP2(TRAP_PRIMITIVE, a1, a2) ;
 	    }
 	  else if (bvecp(a1))
 	    {
@@ -1343,7 +1341,7 @@ obj_t run(obj_t t, obj_t args)
 	  a2 = pop() ;
 	  if (fixnump(a1) && fixnum_value(a1) >= 0)
 	    {
-	      obj_t str = make_string(fixnum_value(a1)+1) ;	      
+	      obj_t str = make_string(fixnum_value(a1)+1) ;
 	      if (charp(a2))
 		{
 		  unsigned char ch = char_value(a2) ;
@@ -2273,12 +2271,12 @@ obj_t run(obj_t t, obj_t args)
 	  {
 	    struct timeval tv ;
 	    int rc = gettimeofday(&tv, NULL) ;
-	    
+
 	    if (rc == 0)
 	      {
 		val = make_bvec(sizeof(time_t)) ;
 		memcpy(&BVEC(val)->val[0], &tv.tv_sec, sizeof(time_t)) ;
-		
+
 		a1 = make_pair() ;
 		PAIR(a1)->car = val ;
 		PAIR(a1)->cdr = make_fixnum(tv.tv_usec) ;
@@ -3362,7 +3360,7 @@ obj_t run(obj_t t, obj_t args)
 		if (rc < 0)
 		  val = make_fixnum(errno) ;
 		else
-		  val = make_fixnum(0) ; 
+		  val = make_fixnum(0) ;
 	      }
 	    else
 	      TRAP2(TRAP_PRIMITIVE, val, a1) ;
@@ -3372,15 +3370,15 @@ obj_t run(obj_t t, obj_t args)
           {
             a1 = pop() ;
             a2 = pop() ;
-            
+
             if (pairp(val) && fixnump(a1) && fixnump(a2))
               {
                 struct winsize ws ;
                 int master, slave ;
-                
+
                 ws.ws_row = fixnum_value(a1) ;
                 ws.ws_col = fixnum_value(a2) ;
-            
+
                 int rc = openpty(&master, &slave, NULL, NULL, &ws) ;
                 if (rc == 0)
                   {
@@ -4094,7 +4092,7 @@ obj_t run(obj_t t, obj_t args)
 	    a1 = val ;
 	    a2 = pop() ;
 	    val = mem_subtypep(a1, a2) ;
-	    NEXT ;   
+	    NEXT ;
 	  }
 #ifdef INDIRECT_THREADED_CODE
         BYTECODE(BADCODE):

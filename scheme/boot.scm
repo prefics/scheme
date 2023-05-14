@@ -468,6 +468,8 @@
             init-action-exists?
             save-image-file
 
+            with-out-of-memory
+
 	    ;; modules
             modules module-names *modules*
             <module> make-module module? module/name set-module/name!

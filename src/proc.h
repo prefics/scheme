@@ -273,6 +273,7 @@
 #define TRAP_PRIMITIVE      3
 #define TRAP_TIMER          4
 #define TRAP_SIGNAL         5
+#define TRAP_OUT_OF_MEMORY  6
 
 /* printf("TRAPPING %d at %d bytecode %d!!!\n",
    n,
@@ -341,5 +342,6 @@ extern obj_t trap ;
 extern int   timer_expired ;
 extern int   host_signal ;
 
+extern void resume_cc(obj_t) ;
 extern obj_t run(obj_t closure, obj_t args) ;
 #endif

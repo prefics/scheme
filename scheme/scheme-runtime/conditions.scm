@@ -144,12 +144,18 @@
 		  (vector-set! trap-vector number handler)
 		  (resume-cc return 'set-trap!/done)))))
 
+(define (trap-ref number)
+  (suspend-cc (lambda (return)
+		(let* ((trap-vector (vector-ref return 12)))
+		  (resume-cc return (vector-ref trap-vector number))))))
+
 (define trap/bad-args 0)
 (define trap/unbound-global 1)
 (define trap/no-procedure 2)
 (define trap/primitive 3)
 (define trap/timer 4)
 (define trap/signal 5)
+(define trap/out-of-memory 6)
 
 (define *signal-hook* '())
 (define (signal-hooks)
@@ -181,8 +187,10 @@
 (define (initialize-conditions!)
   ;; Install a vector object in the TRAP entry of the processor
   (suspend-cc (lambda (return)
-		(vector-set! return 12 (make-vector 6 'trap-not-set!))
-		(resume-cc return 'done)))
+                (let ((traps (make-vector 7 'trap-not-set!)))
+                  (vector-set! traps trap/out-of-memory '())
+		  (vector-set! return 12 traps)
+		  (resume-cc return 'done))))
   (set-trap! trap/bad-args (lambda (proc args)
 ;;			     (display "bad argument")
 			     (signal (make-arity-error proc args))))

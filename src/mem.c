@@ -33,6 +33,7 @@ static void  mem_close_channels(void) ;
 static void  mem_grow_channels(void) ;
 static void  grow_symbol_table(void) ;
 static unsigned long symbol_hash(obj_t) ;
+static void mem_out_of_memory_check() ;
 
 static int num_channels = 10 ;
 static obj_t *channels ;
@@ -118,8 +119,34 @@ void mem_gc(void)
 #endif
   validate_heap(-1) ;
   /*
-  write_obj(literals) ;
-  write_obj(code_vector) ; */
+    write_obj(literals) ;
+    write_obj(code_vector) ;
+  */
+  mem_out_of_memory_check() ;
+}
+
+static void mem_out_of_memory_check()
+{
+  if (mem_end - mem_free < 4096)
+    {
+      obj_t cc = VECTOR(trap)->val[TRAP_OUT_OF_MEMORY] ;
+
+      while (cc != obj_nil && mem_end - mem_free < 4096)
+        {
+          obj_t point = PAIR(cc)->car ;
+          cc = PAIR(cc)->cdr ;
+          resume_cc(point) ;
+          mem_gc() ;
+        }
+
+      if (mem_end - mem_free < 4096)
+        {
+          printf("OUT OF MEMORY") ; fflush(NULL) ;
+          *((int *) 0x00) = 0  ;
+        }
+
+      val = obj_true ;
+    }
 }
 
 int validate_pointer(obj_t ptr)
@@ -529,7 +556,7 @@ void grow_symbol_table(void)
       obj_t symbol = VECTOR(symbol_table)->val[i] ;
       unsigned long bucket = symbol_hash(symbol) % new_len ;
       uintptr_t j ;
-      
+
       for (j = bucket ; VECTOR(new_symbol_table)->val[j] != obj_false ; j=(j+1) % new_len) ;
       VECTOR(new_symbol_table)->val[j] = symbol ;
     }
@@ -572,8 +599,8 @@ obj_t intern(void)
   else
     {
       uintptr_t i ;
-      
-      for (i = (start_index + 1) % len ; 
+
+      for (i = (start_index + 1) % len ;
 	   i != start_index &&
 	   VECTOR(symbol_table)->val[i] != obj_false &&
 	   symbolcmp(val, VECTOR(symbol_table)->val[i]);
@@ -929,7 +956,7 @@ void mem_update(void)
   a4            = mem_reloc(a4) ;
 
   classes       = mem_reloc(classes) ;
-  
+
   int i ;
   for (i = 0 ; i < num_channels ; i++)
     if (channels[i] != obj_undefined)

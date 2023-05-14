@@ -518,7 +518,7 @@
 	;; (define-method ?getter ((obj ?type)) (record-ref obj '?field))))
 	(define ?getter (lambda (obj) (record-ref obj '?field)))))
     '((define-record-field ?field ?getter ?setter)
-      (begin 
+      (begin
 	;; (define-generic ?getter (obj))
 	;; (define-method ?getter ((obj ?type)) (record-ref obj '?field))
 	;; (define-generic ?setter (obj value))
@@ -683,7 +683,7 @@
 	  make-generic generic-methods method-applicable?
 	  method-more-specific? sorted-applicable-methods
 	  applicable-methods generic-add-method!
-          
+
           (define-method :syntax) method-specs
           (defm :syntax)
 
@@ -698,7 +698,7 @@
 	  instance? subtype? subclass?
 
           (let-keys :syntax)
-          
+
 	  ;; fluids.scm
 	  fluid let-fluid set-fluid! make-fluid fluid?
 
@@ -728,7 +728,7 @@
 	  add-resource-provider remove-resource-provider
 	  open-resource-input-port with-input-from-resource
 	  call-with-input-resource
-	  
+
 	  ;; init.scm
 	  (define-init-action :syntax)
           make-action action?
@@ -739,6 +739,8 @@
           add-init-action! remove-init-action! lookup-action init-actions
           init-action-exists?
           save-image-file
+
+          with-out-of-memory
 
 	  ;; modules
 	  modules module-names *modules*
@@ -764,21 +766,21 @@
 
 	  ;; conditions.scm
 	  (condition-case :syntax)
-	  
+
 	  describe-condition default-handler
 	  <condition> condition? make-condition
 	  <simple-condition> make-simple-condition simple-condition? condition-message condition-arguments
 	  <serious-condition> make-serious-condition serious-condition
 	  <error> make-error error?
 	  <simple-error> make-simple-error simple-error?
-	  
+
 	  <call-error> make-call-error call-error? call-error-function call-error-arguments
 	  <arity-error> make-arity-error arity-error?
 	  <type-error> make-type-error type-error?
-	  
+
 	  <unbound-global-error> make-unbound-global-error unbound-global-error? unbound-global-error-variable
 	  <primitive-error> make-primitive-error primitive-error?
-	  
+
 	  <restart> make-restart restart-description
 	  for-each-handler
 	  signal
@@ -786,7 +788,7 @@
 	  initialize-conditions!
 	  add-signal-hook! remove-signal-hook! with-signal-hook
 	  signal-hooks
-	  
+
           ;; debug.scm
           continuation-val continuation-stack continuation-top
           continuation-env continuation-template continuation-code
@@ -847,7 +849,7 @@
 	  close-channel
 
 	  ;; extensions.scm
-	  
+
 	  sort
 	  delq delv delete
 	  posq posv position
@@ -855,10 +857,10 @@
 	  all? any?
 	  make-list
 	  sum
-	  
+
 	  vector-sort! subvector
 	  vector-extend
-	  
+
 	  string-prefix?
 	  string-position
 	  string-split
@@ -904,7 +906,7 @@
       system-machine
 
       add-resource-path! remove-resource-path!
-      
+
       ;; file.scm
       create-directory! create-fifo! create-hard-link! create-symlink!
       delete-directory! delete-file! delete-filesys-object!
@@ -966,7 +968,7 @@
       date-year set-date-year! date-tz-name set-date-tz-name!
       date-tz-secs set-date-tz-secs! date-summer? set-date-summer!
       date-week-day set-date-week-day! date-year-day set-date-year-day!
-      date 
+      date
       time time-seconds time-milliseconds make-time
       time- time+ time=? time<? time<=? time>=? time>? time/=?
       time->number number->time seconds->time time->seconds
