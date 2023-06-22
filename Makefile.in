@@ -107,16 +107,15 @@ modules:
 	done
 
 install: scmrepl scmc scmld scmscript schake scmdoc
-	$(INSTALL) src/schemy $(DESTDIR)/$(BINDIR)
-	$(INSTALL) scmrepl $(DESTDIR)/$(BINDIR)
-	$(INSTALL) scmc $(DESTDIR)/$(BINDIR)
-	$(INSTALL) scmld $(DESTDIR)/$(BINDIR)
-	$(INSTALL) scmscript $(DESTDIR)/$(BINDIR)
-	$(INSTALL) schake $(DESTDIR)/$(BINDIR)
-	$(INSTALL) scmdoc $(DESTDIR)/$(BINDIR)
-	mkdir -p $(DESTDIR)/$(LIBDIR)
+	$(INSTALL) -D src/schemy $(DESTDIR)/$(BINDIR)
+	$(INSTALL) -D scmrepl $(DESTDIR)/$(BINDIR)
+	$(INSTALL) -D scmc $(DESTDIR)/$(BINDIR)
+	$(INSTALL) -D scmld $(DESTDIR)/$(BINDIR)
+	$(INSTALL) -D scmscript $(DESTDIR)/$(BINDIR)
+	$(INSTALL) -D schake $(DESTDIR)/$(BINDIR)
+	$(INSTALL) -D scmdoc $(DESTDIR)/$(BINDIR)
 	for mod in $(MODULES); do					\
-		$(INSTALL) boot/$$mod.fasl $(DESTDIR)/$(LIBDIR) ;	\
+		$(INSTALL) -D boot/$$mod.fasl $(DESTDIR)/$(LIBDIR) ;	\
 	done
 
 clean:
