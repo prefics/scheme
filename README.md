@@ -1,6 +1,6 @@
 # Scheme
 
-![Build Status](https://github.com/prefics/scheme/workflows/basic-build/badge.svg)
+![Build Status](https://github.com/prefics/scheme/workflows/build/badge.svg)
 
 This repository contains a Scheme implementation that follows the R5RS
 Standard. It supports different deployments strategies:
