@@ -47,7 +47,7 @@
 		      ((and (pair? directive)
 			    (eq? (car directive) 'components))
 		       (let ((parsed-components (map parse-component (cdr directive))))
-			 (set-system-definition-components! system 
+			 (set-system-definition-components! system
 							    parsed-components)))
 		      (else (error "unknown directive ~a" directive)))
 		(loop (cdr def)))
@@ -110,37 +110,47 @@
 
 (define (system-bin-dir) (system-dir "bin/"))
 (define (system-doc-dir) (system-dir "doc/"))
+(define (system-lib-dir) (system-dir "lib/"))
 (define (system-share-dir) (system-dir "share/"))
+(define (system-site-dir) (system-dir "site/"))
 (define (system-src-dir) (system-dir "src/"))
 
 (define (ensure-local-repository!)
-  (let ((home-local (string-append (home-dir) ".local")))
+  (let* ((home-local (string-append (home-dir) ".local"))
+         (home-local-share (string-append home-local "/share"))
+         (home-local-share-scm (string-append home-local-share "/scm")))
+
     (if (not (file-exists? home-local))
-        (create-directory! home-local))
-    (let ((home-local-share (string-append home-local "/share")))
-      (if (not (file-exists? home-local-share))
-          (create-directory! home-local-share))
-      (let ((home-local-share-scm (string-append home-local-share
-                                                 "/scm")))
-        (if (not (file-exists? home-local-share-scm))
-            (create-directory! home-local-share-scm))
-        (let ((home-local-share-scm-src (string-append home-local-share-scm
-                                                           "/src"))
-              (home-local-share-scm-bin (string-append home-local-share-scm
-                                                       "/bin"))
-              (home-local-share-scm-doc (string-append home-local-share-scm
-                                                       "/doc")))
-          (if (not (file-exists? home-local-share-scm-src))
-              (create-directory! home-local-share-scm-src))
-          (if (not (file-exists? home-local-share-scm-bin))
-              (create-directory! home-local-share-scm-bin))
-          (if (not (file-exists? home-local-share-scm-doc))
-              (create-directory! home-local-share-scm-doc)))))))
+        (create-directory! home-local #o755))
+
+    (if (not (file-exists? home-local-share))
+        (create-directory! home-local-share #o755))
+
+    (if (not (file-exists? home-local-share-scm))
+        (create-directory! home-local-share-scm #o755))
+
+    (if (not (file-exists? (system-bin-dir)))
+        (create-directory! (system-bin-dir) #o755))
+
+    (if (not (file-exists? (system-lib-dir)))
+        (create-directory! (system-lib-dir) #o755))
+
+    (if (not (file-exists? (system-doc-dir)))
+        (create-directory! (system-doc-dir) #o755))
+
+    (if (not (file-exists? (system-share-dir)))
+        (create-directory! (system-share-dir) #o755))
+
+    (if (not (file-exists? (system-site-dir)))
+        (create-directory! (system-site-dir) #o755))
+
+    (if (not (file-exists? (system-src-dir)))
+        (create-directory! (system-src-dir) #o755))))
 
 (define *system-definition-paths* (list "."))
 (define (system-definition-paths)
   (append *system-definition-paths*
-	  (list (system-src-dir))))
+	  (list (system-site-dir))))
 
 (define (add-system-path! path)
   (if (and (file-exists? path) (file-directory? path))
@@ -229,18 +239,20 @@
 ;; returns a list of names as string of all available systems
 (define (all-system-names)
   (mapfilter (lambda (dir)
-               (if (or (string=? dir ".")
-                       (string=? dir ".."))
-                   #f
-                   dir))
-             (directory-files (system-src-dir))))
+               (cond ((or (string=? dir ".")
+                          (string=? dir ".."))
+                      #f)
+                     ((string=? ".scm" (file-name-extension dir))
+                      (file-name-sans-extension dir))
+                     (else #f)))
+             (directory-files (system-site-dir))))
 
 ;;;
 ;; returns a list of available systems
 (define (all-systems)
-  (let ((files (directory-files (system-src-dir))))
+  (let ((files (directory-files (system-site-dir))))
     (mapfilter (lambda (dir)
-                 (let ((system-file (string-append (system-src-dir)
+                 (let ((system-file (string-append (system-site-dir)
                                                    dir
                                                    "/system.scm")))
                    (if (file-exists? system-file)
@@ -257,16 +269,20 @@
       (error "system file name ~a does not exists" system-file-name))
   (if (not (file-readable? system-file-name))
       (error "system file ~a is not readable" system-file-name))
-  
+
   (let ((system (read-system-definition-from-file system-file-name)))
     (create-symlink! dirname
-                     (string-append (system-src-dir)
+                     (string-append (system-site-dir)
                                     (symbol->string (system-definition-name system))))
     (for-each (lambda (c) (install-component c system))
-              (system-definition-components system))))
+              (system-definition-components system))
+    (with-output-to-file (string-append (system-site-dir)
+                                        (symbol->string (system-definition-name system))
+                                        ".scm")
+      (lambda ()
+        (display (file-contents system-file-name))))))
 
 (define (add-system name)
-  (ensure-local-repository!)
   (cond ((file-directory? name)
 	 (let* ((dirname (file-name-as-directory (absolute-file-name (expand-file-name name))))
 		(system-file-name (string-append dirname "system.scm")))
@@ -280,19 +296,17 @@
 ;;;
 ;; Remove a system from the registry
 (define (remove-system name)
-  (ensure-local-repository!)
-  (let ((file-name (string-append (system-src-dir)
-                                  name)))
+  (let ((file-name (string-append (system-site-dir) name ".scm")))
     (if (file-exists? file-name)
         (let ((system (read-system-definition-from-file file-name)))
-          (for-each (lambda (c)
-                      (uninstall-component c system))
+          (for-each (lambda (c) (uninstall-component c system))
                     (system-definition-components system))
-          (delete-file! file-name))
+          (delete-file! file-name)
+          (delete-file! (string-append (system-site-dir) name)))
         (error "System ~a does not exists" name))))
 
 ;;;
-;; Compile a system 
+;; Compile a system
 (define (compile-system system)
   (ensure-local-repository!)
   (let ((system (->system-definition system)))
@@ -307,15 +321,16 @@
 (define (load-system-from-definition system)
   (let ((dir (file-name-directory (system-definition-file-name system))))
     (with-cwd dir
-	      (let ((name (system-definition-name system))
-		    (components (system-definition-components system))
-		    (parents (system-definition-parents system)))
-		(if parents (for-each (lambda (s) (load-system s)) parents))
-		(for-each (lambda (c) (load-component c system)) components)))))
+      (let ((name (system-definition-name system))
+	    (components (system-definition-components system))
+	    (parents (system-definition-parents system)))
+	(if parents (for-each (lambda (s) (load-system s)) parents))
+	(for-each (lambda (c) (load-component c system)) components)))))
 
 ;;;
 ;; Loads `system` in the current image. It loads the parents first.
 (define (load-system system)
+  (ensure-local-repository!)
   (let* ((system-def (->system-definition system)))
     (if system-def
 	(display ";; System already loaded\n")
@@ -364,12 +379,20 @@
          (system-file-name (string-append dirname "system.scm")))
     (if (file-exists? system-file-name)
         (let ((system (read-system-definition-from-file system-file-name)))
-          (create-symlink! dirname
-                           (string-append (system-src-dir)
-                                          (symbol->string (system-definition-name system))))
-          (for-each (lambda (c) (install-component c system))
-                    (system-definition-components system)))
+          (if (file-exists? (string-append (system-site-dir) (symbol->string (system-definition-name system))
+                                           ".scm"))
+              (remove-system (symbol->string (system-definition-name system))))
+          (add-system directory))
         (error "Directory ~a has no system file" directory))))
+
+(define (read-installed-system-definition name)
+  (let ((system-file (string-append (system-site-dir) name ".scm")))
+    (if (file-exists? system-file)
+        (read-system-definition-from-file system-file)
+        (error "System ~a is not installed" name))))
+
+(define (uninstall-system name)
+  (remove-system name))
 
 ;;;
 ;; Test a system
@@ -382,12 +405,12 @@
           (for-each test-component (system-definition-components system)))
         (error "system ~a not found on the computer"
                system-name))))
-  
+
 ;;;
 ;; Creates an archive containing all the files from `system`
 (define (package-system systen)
   (error "operation not supported"))
-			       
+
 ;;;
 ;; Uploads `system` for internet wide availability
 (define (upload-system system)
@@ -428,20 +451,54 @@
               (doc-component-index-files c))))
 
 (define-method install-component ((c <library-component>) system)
-  #f)
+  (let* ((base (file-name-directory (system-definition-file-name system)))
+         (lib-file (library-component-file-name c))
+         (lib-dir (file-name-directory lib-file))
+         (lib-def (read-library-definition-from-file (string-append base lib-file))))
+    (create-symlink! (string-append base lib-dir)
+                     (string-append (system-src-dir)
+                                    (symbol->string (library-definition-name lib-def))))))
 
 (define-method install-component ((c <files-component>) system)
-  #f)
+  (let ((sys-name (symbol->string (system-definition-name system)))
+        (sys-dir (file-name-directory (system-definition-file-name system))))
+    (for-each (lambda (name)
+                (create-symlink! (string-append sys-dir name)
+                                 (string-append system-share-dir sys-name "/" name)))
+              (files-component-file-names c))))
 
 (define-method install-component ((c <test-component>) system)
   #f)
+
+(define-method install-component ((c <resource-component>) system)
+  (let ((sys-name (symbol->string (system-definition-name system)))
+        (sys-dir (file-name-directory (system-definition-file-name system)))
+        (resource-dir (resource-component-dir c)))
+    (create-symlink! (string-append sys-dir resource-dir)
+                     (string-append (system-lib-dir) sys-name))))
+
+(define-method uninstall-component ((c <library-component>) system)
+  (let* ((base (file-name-directory (system-definition-file-name system)))
+         (lib-file (library-component-file-name c))
+         (lib-name (file-name-nondirectory (directory-as-file-name (file-name-directory lib-file)))))
+    (delete-file! (string-append (system-src-dir) lib-name))))
+
+(define-method uninstall-component ((c <files-component>) system)
+  (let ((sys-name (symbol->string (system-definition-name system))))
+    (for-each (lambda (name)
+                (delete-file! (string-append (system-share-dir) sys-name "/" name)))
+              (files-component-file-names c))))
+
+(define-method uninstall-component ((c <resource-component>) system)
+  (let ((dir-name (resource-component-dir c)))
+    (delete-file! (string-append (system-lib-dir) dir-name))))
 
 (define-method load-component ((c <resource-component>) system)
   (let ((dir (resource-component-dir c))
         (sys-dir (file-name-directory (system-definition-file-name system))))
     (display ";; adding resource path ") (display sys-dir) (newline)
     (add-resource-path! (string-append sys-dir dir))))
-    
+
 (define-method load-component ((c <library-component>) system)
   (let ((directory (file-name-directory (system-definition-file-name system))))
     (display ";; changing directory to ") (display directory) (newline)
@@ -450,7 +507,7 @@
 	(display ";;; loading library file from ") (display filename) (newline)
 	(let* ((definition (read-library-definition-from-file filename))
 	       (module (with-cwd (file-name-directory filename)
-			 (load-library-definition definition))))
+			         (load-library-definition definition))))
 	  (bind-module! (module/name module) module)
           (display ";;; Module ") (display (module/name module))
           (display " defined.") (newline)
