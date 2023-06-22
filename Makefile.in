@@ -34,13 +34,13 @@ COMPILER=boot/compiler-syntax.fasl		\
 	boot/compiler-compiler.fasl		\
 	boot/compiler-gen.fasl			\
 	boot/compiler-assembler.fasl		\
-	boot/compiler-fasl.fasl		
+	boot/compiler-fasl.fasl
 
 POSIX=	boot/posix-file.fasl			\
 	boot/posix-filename.fasl		\
 	boot/posix-time.fasl			\
 	boot/posix-constants.fasl		\
-	boot/posix-process.fasl		
+	boot/posix-process.fasl
 
 REPL=	boot/repl-repl.fasl
 
@@ -51,7 +51,7 @@ MODULES=scheme-environment      \
 
 all: scmrepl scmc scmld scmscript modules schake scmdoc scms
 
-configure: configure.in 
+configure: configure.in
 	autoconf
 
 scmrepl: $(IMAGE)
@@ -107,16 +107,16 @@ modules:
 	done
 
 install: scmrepl scmc scmld scmscript schake scmdoc
-	$(INSTALL) src/schemy $(BINDIR)
-	$(INSTALL) scmrepl $(BINDIR)
-	$(INSTALL) scmc $(BINDIR)
-	$(INSTALL) scmld $(BINDIR)
-	$(INSTALL) scmscript $(BINDIR)
-	$(INSTALL) schake $(BINDIR)
-	$(INSTALL) scmdoc $(BINDIR)
-	mkdir -p $(LIBDIR)
+	$(INSTALL) src/schemy $(DESTDIR)/$(BINDIR)
+	$(INSTALL) scmrepl $(DESTDIR)/$(BINDIR)
+	$(INSTALL) scmc $(DESTDIR)/$(BINDIR)
+	$(INSTALL) scmld $(DESTDIR)/$(BINDIR)
+	$(INSTALL) scmscript $(DESTDIR)/$(BINDIR)
+	$(INSTALL) schake $(DESTDIR)/$(BINDIR)
+	$(INSTALL) scmdoc $(DESTDIR)/$(BINDIR)
+	mkdir -p $(DESTDIR)/$(LIBDIR)
 	for mod in $(MODULES); do					\
-		$(INSTALL) boot/$$mod.fasl $(LIBDIR) ;	\
+		$(INSTALL) boot/$$mod.fasl $(DESTDIR)/$(LIBDIR) ;	\
 	done
 
 clean:
@@ -148,7 +148,7 @@ bootstrap:
 		      echo ',load bootstrap.scm'; \
 		      echo '(initial-env)' ; \
 		      echo '(compile-initial-files)'; \
-		      echo ',exit' ) | scheme48 
+		      echo ',exit' ) | scheme48
 
 bootstrap-runtime:
 	cd scheme ; ( echo '' ; \
@@ -159,7 +159,7 @@ bootstrap-runtime:
 		      echo ',load bootstrap.scm'; \
 		      echo '(initial-env)' ; \
 		      echo '(compile-runtime)'; \
-		      echo ',exit' ) | scheme48 
+		      echo ',exit' ) | scheme48
 
 bootstrap-compiler:
 	cd scheme ; ( echo '' ; \
@@ -170,7 +170,7 @@ bootstrap-compiler:
 		      echo ',load bootstrap.scm'; \
 		      echo '(initial-env)' ; \
 		      echo '(compile-compiler)'; \
-		      echo ',exit' ) | scheme48 
+		      echo ',exit' ) | scheme48
 
 bootstrap-repl:
 	cd scheme ; ( echo '' ; \
@@ -181,7 +181,7 @@ bootstrap-repl:
 		      echo ',load bootstrap.scm'; \
 		      echo '(initial-env)' ; \
 		      echo '(compile-repl)'; \
-		      echo ',exit' ) | scheme48 
+		      echo ',exit' ) | scheme48
 
 bootstrap-posix:
 	cd scheme ; ( echo '' ; \
@@ -192,7 +192,7 @@ bootstrap-posix:
 		      echo ',load bootstrap.scm'; \
 		      echo '(initial-env)' ; \
 		      echo '(compile-posix)'; \
-		      echo ',exit' ) | scheme48 
+		      echo ',exit' ) | scheme48
 
 bootstrap-boot:
 	cd scheme ; ( echo '' ; \
@@ -203,4 +203,4 @@ bootstrap-boot:
 		      echo ',load bootstrap.scm'; \
 		      echo '(initial-env)' ; \
 		      echo '(compile-boot)'; \
-		      echo ',exit' ) | scheme48 
+		      echo ',exit' ) | scheme48
