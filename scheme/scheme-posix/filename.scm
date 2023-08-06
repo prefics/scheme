@@ -30,7 +30,7 @@
 (define (directory-as-file-name filename)
   (cond ((string=? "/" filename) filename)
         ((string=? "" filename) ".")
-        ((file-name-directory? filename) 
+        ((file-name-directory? filename)
          (substring filename 0 (- (string-length filename) 1)))
         (else filename)))
 
@@ -54,7 +54,7 @@
       (let loop ((i 0)
                  (last 0))
         (if (< i (string-length filename))
-            (if (char=? #\/ (string-ref filename i)) 
+            (if (char=? #\/ (string-ref filename i))
                 (loop (+ i 1) (+ i 1))
                 (loop (+ i 1) last))
             (substring filename 0 last)))))
@@ -233,9 +233,9 @@
 	  (else (string-append (file-name-as-directory (cwd))
 			       (file-name-as-directory dir)
 			       filename)))))
-                      
+
 ;;;
-;; Return the home directory of `user`.    
+;; Return the home directory of `user`.
 (define (home-dir . user)
   (if (null? user)
       (user-home-dir)
@@ -245,6 +245,6 @@
 ;; Return a filename pointing to the file `filename` residing in the
 ;; `user` home directory.
 (define (home-file user filename)
-  (string-append (file-name-as-directory (home-dir user)) 
-                 "/" 
+  (string-append (file-name-as-directory (home-dir user))
+                 "/"
                  filename))

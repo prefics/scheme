@@ -193,7 +193,9 @@
                 'ok
                 (begin
                   (condition-case
-                   (eval exp module)
+                   (with-source-location (absolute-file-name filename)
+                     (lambda ()
+                       (eval exp module)))
                    (<condition>
                     (lambda (error)
                       (display"Error when loading expression ")
@@ -385,7 +387,9 @@
 
 (define (compile-file* fasl-port module filenames)
   (for-each (lambda (filename)
-	      (compile-file fasl-port module filename))
+              (with-source-location (absolute-file-name filename)
+                (lambda ()
+	          (compile-file fasl-port module filename))))
             filenames))
 
 (define-repl-command expand

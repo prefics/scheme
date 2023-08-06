@@ -417,12 +417,12 @@
                   new-string)))
 	  (error "SUBSTRING: END value longer than string" string start end))
       (error "SUBSTRING: START value before the beginning" string start end)))
-      
+
 
 ;;;
 ;; Convert the number is string representation and return the integer
 ;; having the same value. The base of the represenation can be
-;; specified with the optional argument `base`. The default value is 10. 
+;; specified with the optional argument `base`. The default value is 10.
 (define (string->number str . base)
   (let* ((base (if (null? base) 10 (car base)))
          (negative? (char=? #\- (string-ref str 0))))
@@ -667,7 +667,7 @@
        (char<=? letter #\z)))
 
 ;;;
-;; Return the character code of `char` in the ISO-8859-1 encoding. 
+;; Return the character code of `char` in the ISO-8859-1 encoding.
 (define (char->integer char)
   (char->number char))
 
@@ -851,7 +851,7 @@
 (define (unspecific-object? o) (eq? o (unspecific-object)))
 
 ;;;
-;; == Environment procedures 
+;; == Environment procedures
 
 ;;;
 ;; Return an environment compatible with the revision `n` of the Scheme
@@ -876,3 +876,14 @@
 ;; the expression.
 (define (set-eval-procedure proc)
   (set! *eval* proc))
+
+(define *source-location* #f)
+
+(define (current-source-location) *source-location*)
+
+(define (with-source-location location thunk)
+  (let ((old *source-location*))
+    (set! *source-location* location)
+    (let ((value (thunk)))
+      (set! *source-location* old)
+      value)))

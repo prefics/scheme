@@ -763,6 +763,7 @@
 	  bound?
 
 	  eval set-eval-procedure
+          with-source-location current-source-location
 
 	  ;; conditions.scm
 	  (condition-case :syntax)
@@ -1042,22 +1043,24 @@
                     'done-compiling
                     (let* ((syntax-env (module/syntax module))
                            (expanded-exp (syntax-expand exp (make-syntax-env syntax-env))))
-;                      (display "Expanded:" stdout) (display expanded-exp stdout) (newline stdout)
-                      (if (define-syntax? expanded-exp)
-                          (let* ((expander (define-syntax/expr expanded-exp))
-                                 (compiled (compile expander '() ""
-                                                    return-continuation))
-                                 (assembled (assembler compiled module)))
-                            (write-type type/syntax fasl-port)
-                            (write-fasl! (define-syntax/name expanded-exp) fasl-port)
-                            (write-fasl! assembled fasl-port))
-                          (let* ((compiled-exp (compile expanded-exp '() ""
+                                        ;                      (display "Expanded:" stdout) (display expanded-exp stdout) (newline stdout)
+                      (with-source-location input
+                        (lambda ()
+                          (if (define-syntax? expanded-exp)
+                              (let* ((expander (define-syntax/expr expanded-exp))
+                                     (compiled (compile expander '() ""
                                                         return-continuation))
-                                 (assembled-exp (assembler compiled-exp module)))
-                            ;			  (display "compiling:") (display compiled-exp)
+                                     (assembled (assembler compiled module)))
+                                (write-type type/syntax fasl-port)
+                                (write-fasl! (define-syntax/name expanded-exp) fasl-port)
+                                (write-fasl! assembled fasl-port))
+                              (let* ((compiled-exp (compile expanded-exp '() ""
+                                                            return-continuation))
+                                     (assembled-exp (assembler compiled-exp module)))
+                                        ;			  (display "compiling:") (display compiled-exp)
 ;                            (display expanded-exp) (newline)
-                            (write-type type/expr fasl-port)
-                            (write-fasl! assembled-exp fasl-port)))
+                                (write-type type/expr fasl-port)
+                                (write-fasl! assembled-exp fasl-port)))))
                       (loop (read))))))))))))
 
 (define (disasm code indent)

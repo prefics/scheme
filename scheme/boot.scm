@@ -491,6 +491,7 @@
 	    bound?
 
 	    eval set-eval-procedure
+            with-source-location current-source-location
 
 	    ;; conditions.scm
 	    (condition-case :syntax)

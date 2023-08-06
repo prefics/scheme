@@ -15,7 +15,7 @@
 	((define-syntax? exp)  (compile-define-syntax exp env name k))
         (else (error "unknown expression '~a'" exp))))
 
-(define return-continuation #t)  
+(define return-continuation #t)
 (define (return-continuation? k) (eq? k #t))
 
 ;; A continuation K is either:
@@ -53,7 +53,7 @@
           (compile (car exp) env name k)
           `(,@(compile (car exp) env name #f)
             ,@(compile-body (cdr exp) env name k)))))
-  
+
 (define (compile-var exp env name k)
   (let ((binding (lookup-env exp env)))
     (cond ((global-binding? binding)
@@ -67,29 +67,52 @@
   (if (symbol? (scoped/uid exp))
       `((global ,(cons (scoped/name exp) (scoped/uid exp))) ,@(continue k))
       (compile-var exp env name k)))
-  
+
 (define (compile-literal exp env name k)
   `((lit ,(literal/val exp)) ,@(continue k)))
 
+(define (lambda-documentation body)
+  (if (and (pair? body) (pair? (cdr body)))
+      (let ((doc (car body)))
+        (if (and (literal? doc) (string? (literal/val doc)))
+            (literal/val doc)
+            #f))
+      #f))
+
+(define (body-without-doc body)
+  (if (and (pair? body) (pair? (cdr body)))
+      (let ((doc (car body)))
+        (if (and (literal? doc) (string? (literal/val doc)))
+            (cdr body)
+            body))
+      body))
+
 (define (compile-lambda exp env name k)
-  (let ((formals (lambda/formals exp))
-        (params (map (lambda (name) (if (scoped? name) (scoped/name name) name))
-                     (make-proper (lambda/formals exp))))
-        (body (lambda/body exp)))
+  (let* ((formals (lambda/formals exp))
+         (params (map (lambda (name) (if (scoped? name) (scoped/name name) name))
+                      (make-proper (lambda/formals exp))))
+         (body (lambda/body exp))
+         (doc (lambda-documentation body)))
     (if (list? formals)
 	`((closure ((debug (parameters ,params))
                     (debug (name ,name))
+                    (debug (doc ,doc))
+                    (debug (file ,(current-source-location)))
                     (args ,(length formals))
-                    ,@(compile-body body (bind-local formals env) 
+                    ,@(compile-body (body-without-doc body)
+                                    (bind-local formals env)
                                     name return-continuation)))
           ,@(continue k))
 	`((closure ((debug (parameters ,params))
                     (debug (name ,name))
+                    (debug (doc ,doc))
+                    (debug (file ,(current-source-location)))
                     (args>= ,(length* formals))
-                    ,@(compile-body body (bind-local* formals env) 
+                    ,@(compile-body (body-without-doc body)
+                                    (bind-local* formals env)
                                     name return-continuation)))
           ,@(continue k)))))
-                       
+
 (define (compile-if exp env name k)
   (let* ((label-else (gen-temp "else-"))
          (label-end (gen-temp "end-")))
@@ -112,7 +135,7 @@
     `(,@(compile (set!/rhs exp) env (subname name
                                              (if (scoped? lhs)
                                                  (symbol->string (scoped/name lhs))
-                                                 (symbol->string lhs))) #f)      
+                                                 (symbol->string lhs))) #f)
       ,@(if (and (scoped? lhs) (symbol? (scoped/uid lhs)))
             `((set-global ,(cons (scoped/name lhs) (scoped/uid lhs))))
             (let ((binding (lookup-env lhs env)))
@@ -151,7 +174,7 @@
              (init (binding/exp binding)))
         `(,@(compile init env (subname name (if (scoped? var)
                                                 (symbol->string (scoped/name var))
-                                                (symbol->string var))) 
+                                                (symbol->string var)))
                      #f)
           (push)
           ,@(compile-bindings (cdr bindings) env name)))))
@@ -194,7 +217,7 @@
 		   `(,@(compile-operands (cdr args) env name #f)
                      ,@(compile (car args) env name #f)))))
     `(,@code (,(primitive-call/name exp)) ,@(continue k))))
-    
+
 (define (compile-operands ops env name k)
   (if (null? ops)
       '()
@@ -262,7 +285,3 @@
 
 (define (seq . l) l)
 (define seq* append)
-
-
-
-
