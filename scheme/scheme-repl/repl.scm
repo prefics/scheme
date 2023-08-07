@@ -387,9 +387,12 @@
 
 (define (compile-file* fasl-port module filenames)
   (for-each (lambda (filename)
-              (with-source-location (absolute-file-name filename)
-                (lambda ()
-	          (compile-file fasl-port module filename))))
+              (let ((fn (cond ((string? filename) filename)
+                              ((symbol? filename) (symbol->string filename))
+                              (else (error "Filename needs to be a string or symbol, got ~a" filename)))))
+                (with-source-location (absolute-file-name fn)
+                  (lambda ()
+	            (compile-file fasl-port module fn)))))
             filenames))
 
 (define-repl-command expand
