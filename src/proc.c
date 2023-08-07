@@ -204,6 +204,11 @@ int unroll_list(void)
   return length ;
 }
 
+void handle_timer_sig()
+{
+  timer_expired = 1 ;
+}
+
 obj_t run(obj_t t, obj_t args)
 {
 #ifdef INDIRECT_THREADED_CODE
@@ -4015,6 +4020,17 @@ obj_t run(obj_t t, obj_t args)
 	    a2 = pop() ;
 	    if (fixnump(a1) && fixnump(a2))
 	      {
+                struct sigaction sa;
+
+                memset(&sa, 0, sizeof(sa)) ;
+                sigemptyset(&sa.sa_mask) ;
+                sa.sa_flags = 0;
+                sa.sa_handler = sig_timer_expired;
+                if (sigaction(SIGVTALRM, &sa, NULL) == -1)
+                  {
+                    printf("Error setting up timer signal handler\n") ;
+                  };
+
 		struct itimerval timer ;
 
 		timer.it_interval.tv_sec = 0 ;

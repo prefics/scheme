@@ -255,7 +255,7 @@
 (define (threads)
   (cons (thread-name *thread*) (map thread-name (car *threads*))))
 
-(define $slice 500)
+(define $slice 50)
 
 (define (schedule-thread!)
   (if (queue-empty? *threads*)
@@ -267,7 +267,7 @@
 	    (begin
 	      (set! *thread* thread)
 	      (spinlock-unlock! *scheduler-lock*)
-	      ;(%set-timer 0 $slice)
+              (%set-timer 0 $slice)
 	      ((thread-continuation thread) 'continue))))))
 
 (define (current-thread) *thread*)
@@ -285,7 +285,7 @@
   (enqueue! *thread* *threads*)
   (schedule-thread!))
 
-(define (thread-yield!) 
+(define (thread-yield!)
   (spinlock-lock! *scheduler-lock*)
   (call/cc really-thread-yield))
 
@@ -325,4 +325,3 @@
 	(set-thread-continuation! thread (lambda (v)
 					   (thunk)
 					   (old))))))
-
