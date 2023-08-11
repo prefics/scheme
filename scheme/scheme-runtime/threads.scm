@@ -91,8 +91,7 @@
 		     (condition-case
 		      (set! value (proc))
 		      (<condition> (lambda (c) (set! value c))))
-		     (thread-terminate! *thread* value)
-		     (display "Zombie!!!!")))))
+		     (thread-terminate! *thread* value)))))
 	(name (if (pair? opt) (car opt) "Unnamed thread")))
     (really-make-thread name $status/ready (unspecific-object) '() proc*)))
 
@@ -212,11 +211,11 @@
 	   (begin
 	     (set! *read-waiting*
 		   (scan-thread (lambda (channel) (memq channel oks))
-				thread-start*!
+                                mark-thread-ready
 				*read-waiting*))
 	     (set! *write-waiting*
 		   (scan-thread (lambda (channel) (memq channel oks))
-				thread-start*!
+                                mark-thread-ready
 				*write-waiting*)))))
     (spinlock-unlock! *scheduler-lock*)
     (run-idle-hooks!)
@@ -249,6 +248,7 @@
 
 (define $status/ready 0)
 (define $status/dead 1)
+(define $status/suspended 2)
 
 (define *thread* #f)
 
@@ -262,66 +262,97 @@
       (let loop () (display "No more threads to run!!!") (loop))
       (let ((thread (dequeue! *threads*)))
 ;        (display "scheduling:") (display (thread-name thread)) (newline)
-	(if (eq? (thread-status thread) $status/dead)
-	    (schedule-thread!)
-	    (begin
-	      (set! *thread* thread)
-	      (spinlock-unlock! *scheduler-lock*)
-              (%set-timer 0 $slice)
-	      ((thread-continuation thread) 'continue))))))
+	(cond ((eq? (thread-status thread) $status/ready)
+	       (set! *thread* thread)
+	       (spinlock-unlock! *scheduler-lock*)
+               (%set-timer 0 $slice)
+	       ((thread-continuation thread) 'continue))
+              ((eq? (thread-status thread) $status/suspended)
+               (enqueue! thread *threads*)
+               (schedule-thread!))
+              (else (schedule-thread!))))))
 
 (define (current-thread) *thread*)
 
-(define (thread-start*! thread)
+(define (mark-thread-ready thread)
+  (set-thread-status! thread $status/ready)
   (enqueue! thread *threads*))
-
-(define (thread-start! thread)
-  (spinlock-lock! *scheduler-lock*)
-  (thread-start*! thread)
-  (spinlock-unlock! *scheduler-lock*))
 
 (define (really-thread-yield proc)
   (set-thread-continuation! *thread* proc)
   (enqueue! *thread* *threads*)
   (schedule-thread!))
 
-(define (thread-yield!)
-  (spinlock-lock! *scheduler-lock*)
-  (call/cc really-thread-yield))
-
 (define (thread-yield-if-possible)
   (if (spinlock-try-lock! *scheduler-lock*)
       (call/cc really-thread-yield)))
 
-(define (thread-suspend!)
+(define (thread-yield!)
+  (spinlock-lock! *scheduler-lock*)
+  (call/cc really-thread-yield))
+
+(define (thread-start! thread)
+  (spinlock-lock! *scheduler-lock*)
+  (enqueue! thread *threads*)
+  (spinlock-unlock! *scheduler-lock*))
+
+(define (thread-suspend! thread)
   (call/cc
     (lambda (k)
       (spinlock-lock! *scheduler-lock*)
+      (set-thread-status! *thread* $status/suspended)
       (set-thread-continuation! *thread* k)
+      (enqueue! *thread* *threads*)
       (schedule-thread!))))
 
+(define (thread-resume! thread)
+  (spinlock-lock! *scheduler-lock*)
+  (set-thread-status! thread $status/ready)
+  (enqueue! thread *threads*)
+  (spinlock-unlock! *scheduler-lock*))
+
 (define (thread-terminate! thread value)
+  (spinlock-lock! *scheduler-lock*)
   (if (eq? (thread-status thread) $status/dead)
-      thread
+      (spinlock-unlock! *scheduler-lock*)
       (begin
-	(spinlock-lock! *scheduler-lock*)
+        ;; (display (list 'thread-terminate (thread-name (current-thread))
+        ;;                (thread-name thread) value)) (newline)
 	(set-thread-value! thread value)
-	(for-each (lambda (t) (enqueue! t *threads*)) (thread-joiner thread))
+	(for-each (lambda (t)
+                    ;; (display (list 'resuming-joined (thread-name t))) (newline)
+                    (set-thread-status! t $status/ready)
+                    (enqueue! t *threads*))
+                  (thread-joiner thread))
 	(set-thread-status! thread $status/dead)
+        ;; (display (list 'tr-at-end (threads))) (newline)
 	(if (eq? thread (current-thread))
-	    (schedule-thread!)))))
+	    (schedule-thread!)
+            (spinlock-unlock! *scheduler-lock*)))))
 
 (define (thread-join! thread)
+  (spinlock-lock! *scheduler-lock*)
+  ;; (display (list 'thread-join (thread-name (current-thread))
+  ;;                (thread-name thread))) (newline)
   (if (eq? (thread-status thread) $status/dead)
-      thread
+      (spinlock-unlock! *scheduler-lock*)
       (begin
 	(set-thread-joiner! thread (cons (current-thread) (thread-joiner thread)))
-	(thread-suspend!))))
+        (call/cc
+         (lambda (k)
+           (set-thread-continuation! (current-thread) k)
+           (set-thread-status! (current-thread) $status/suspended)
+           (schedule-thread!))))))
 
 (define (thread-interrupt! thread thunk)
+  (spinlock-lock! *scheduler-lock*)
   (if (eq? thread (current-thread))
-      (thunk)
-      (let ((old (thread-continuation thread)))
-	(set-thread-continuation! thread (lambda (v)
-					   (thunk)
-					   (old))))))
+      (begin
+        (spinlock-unlock! *scheduler-lock*)
+        (thunk))
+      (begin
+        (let ((old (thread-continuation thread)))
+	  (set-thread-continuation! thread (lambda (v)
+					     (thunk)
+					     (old)))
+          (spinlock-unlock! *scheduler-lock*)))))

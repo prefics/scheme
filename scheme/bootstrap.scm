@@ -815,7 +815,7 @@
 	  thread-name set-thread-name! thread-value set-thread-value!
 	  thread-continuation set-thread-continuation! current-thread
 	  thread-start! thread-yield! thread-suspend! thread-terminate!
-	  thread-join! threads thread-block-read thread-block-write
+	  thread-join! thread-resume! threads thread-block-read thread-block-write
 	  thread-interrupt!
 	  add-idle-hook!
 
