@@ -74,6 +74,7 @@ static void push(obj_t) ;
 static obj_t pop(void) ;
 static obj_t suspend_cc(void) ;
 static int unroll_list(void) ;
+static void handle_timer_sig(int);
 
 static obj_t random32(void) ;
 
@@ -204,7 +205,7 @@ int unroll_list(void)
   return length ;
 }
 
-void handle_timer_sig()
+void handle_timer_sig(int value)
 {
   timer_expired = 1 ;
 }
@@ -4025,7 +4026,7 @@ obj_t run(obj_t t, obj_t args)
                 memset(&sa, 0, sizeof(sa)) ;
                 sigemptyset(&sa.sa_mask) ;
                 sa.sa_flags = 0;
-                sa.sa_handler = sig_timer_expired;
+                sa.sa_handler = handle_timer_sig;
                 if (sigaction(SIGVTALRM, &sa, NULL) == -1)
                   {
                     printf("Error setting up timer signal handler\n") ;
