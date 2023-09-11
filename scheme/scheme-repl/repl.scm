@@ -778,7 +778,8 @@
 			       (evaluate))))))))))
            (loop))))))
   (display "Thank you for using Schemy")
-  (newline))
+  (newline)
+  (exit 0))
 
 (define (display-module m)
   (display "Module: ") (display (module/name m)) (newline)
@@ -804,7 +805,7 @@
   (condition-case
    (let loop ((args args))
      (if (null? args)
-         'done
+         (exit 0)
          (let ((arg (car args)))
            (cond ((string=? arg "--resource-dir")
                   (add-resource-path! (cadr args))
@@ -813,10 +814,12 @@
                        (loop (cdr args)))))))
    (<error>
     (lambda (error)
-      (report-condition error)))
+      (report-condition error)
+      (exit 1)))
    (<condition>
     (lambda (c)
-      (report-condition c)))))
+      (report-condition c)
+      (exit 1)))))
 
 (define (link! output-name entry/module entry/name fasls)
   (let ((initial-module (make-module 'scheme-user '()
@@ -865,8 +868,9 @@
                     (loop (cddr args)))
 		   (else (set! fasl (append fasl (list arg)))
 			 (loop (cdr args)))))))
-     (<error> (lambda (error) (report-condition error)))
-     (<condition> (lambda (c) (report-condition c))))))
+     (<error> (lambda (error) (report-condition error) (exit 1)))
+     (<condition> (lambda (c) (report-condition c) (exit 1)))))
+  (exit 0))
 
 
 (define (script-main args)
@@ -900,8 +904,11 @@
      (<error>
       (lambda (error)
 	(report-condition error)
-	(newline)))
+	(newline)
+        (exit 1)))
      (<condition>
       (lambda (c)
 	(report-condition error)
-	(newline))))))
+	(newline)
+        (exit 1)))))
+  (exit 0))

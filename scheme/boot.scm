@@ -543,10 +543,12 @@
 	    ;; thread.scm
 	    <thread> make-thread thread?
 	    thread-name set-thread-name! thread-value set-thread-value!
+            thread-status set-thread-status!
+            $status/ready $status/dead $status/susended
 	    thread-continuation set-thread-continuation! current-thread
 	    thread-start! thread-yield! thread-suspend! thread-terminate!
 	    thread-join! thread-resume! threads thread-block-read thread-block-write
-	    thread-interrupt!
+	    thread-interrupt! thread-named
 	    add-idle-hook!
 
 	    make-spinlock spinlock? spinlock-name

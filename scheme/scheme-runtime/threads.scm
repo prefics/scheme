@@ -119,7 +119,7 @@
 
 (define (queue-front queue) (car queue))
 
-(define *scheduler-lock* (make-spinlock "Scheduling lock"))
+(define *scheduler-lock* (make-spinlock "Scheduler's lock"))
 
 (define *threads* (make-empty-queue))
 (define *read-waiting* '())
@@ -128,18 +128,25 @@
 (define *timeouts* '())
 
 (define (thread-block-read channel)
+  (spinlock-lock! *scheduler-lock*)
   (call/cc (lambda (proc)
-;	     (display "!blocking read!")
-	     (spinlock-lock! *scheduler-lock*)
              (set-thread-continuation! *thread* proc)
+             (set-thread-status! *thread* $status/suspended)
              (set! *read-waiting* (cons (cons channel *thread*) *read-waiting*))
+             (enqueue! *thread* *threads*)
+             ;; (display (map thread-name (car *threads*)))
+             ;; (display (list "Block Read" (thread-name *thread*))) (newline)
              (schedule-thread!))))
 
 (define (thread-block-write channel)
+  (spinlock-lock! *scheduler-lock*)
   (call/cc (lambda (proc)
-	     (spinlock-lock! *scheduler-lock*)
              (set-thread-continuation! *thread* proc)
+             (set-thread-status! *thread* $status/suspended)
              (set! *write-waiting* (cons (cons channel *thread*) *write-waiting*))
+             (enqueue! *thread* *threads*)
+             ;; (display (map thread-name (car *threads*)))
+             ;; (display (list "Block Write" (thread-name *thread*))) (newline)
              (schedule-thread!))))
 
 (define (time+ delta)
@@ -179,7 +186,11 @@
 	     (channel (car entry))
 	     (thread (cdr entry)))
 	(if (pred? channel)
-	    (begin (proc thread) (scan-thread pred? proc (cdr l)))
+	    (begin
+              ;; (display (list "Unblock " (thread-name thread))) (newline)
+              (proc thread)
+              ;; (display (map thread-name (cons *thread* (car *threads*))))
+              (scan-thread pred? proc (cdr l)))
 	    (cons entry (scan-thread pred? proc (cdr l)))))))
 
 (define *idle-hooks* '())
@@ -209,6 +220,7 @@
 	  ((eq? oks #f) oks)
 	  (else
 	   (begin
+             ;; (display (list "ready to unblock" (map thread-name (car *threads*)))) (newline)
 	     (set! *read-waiting*
 		   (scan-thread (lambda (channel) (memq channel oks))
                                 mark-thread-ready
@@ -217,14 +229,9 @@
 		   (scan-thread (lambda (channel) (memq channel oks))
                                 mark-thread-ready
 				*write-waiting*)))))
-    (spinlock-unlock! *scheduler-lock*)
     (run-idle-hooks!)
-    (if (queue-empty? *threads*)
-	(let ((wakeup-time (or (first-timeout) 100)))
-	  (posix-select reads writes wakeup-time)
-	  )
-	(begin ;(display "!event io scanning done!")
-	  (thread-yield!)))
+    (spinlock-unlock! *scheduler-lock*)
+    (thread-yield!)
     (event-i/o-thread)))
 
 (define (start-multiprocessing)
@@ -233,10 +240,12 @@
   (set-trap! trap/timer thread-yield-if-possible)
   (call/cc
    (lambda (rest)
-     (let ((thread (really-make-thread "Init" $status/ready (unspecific-object) '() rest)))
+     (let ((thread (or (thread-named "Init")
+                       (really-make-thread "Init" $status/ready (unspecific-object) '() rest))))
+       (set-thread-continuation! thread rest)
        (spinlock-lock! *scheduler-lock*)
        (if (queue-empty? *threads*)
-	   (enqueue! (really-make-thread "Event I/O Thread"
+	   (enqueue! (really-make-thread "Event I/O"
 					 $status/ready
 					 (unspecific-object)
 					 '()
@@ -258,25 +267,32 @@
 (define $slice 50)
 
 (define (schedule-thread!)
+  ;;(display (list "available:" (map thread-name (car *threads*)))) (newline)
   (if (queue-empty? *threads*)
       (let loop () (display "No more threads to run!!!") (loop))
       (let ((thread (dequeue! *threads*)))
-;        (display "scheduling:") (display (thread-name thread)) (newline)
+        ;;(display "scheduling:") (display (thread-name thread)) (display (thread-status thread))
+        ;;(newline)
 	(cond ((eq? (thread-status thread) $status/ready)
 	       (set! *thread* thread)
 	       (spinlock-unlock! *scheduler-lock*)
                (%set-timer 0 $slice)
 	       ((thread-continuation thread) 'continue))
               ((eq? (thread-status thread) $status/suspended)
+               ;;(display (list "skiping " (thread-name thread))) (newline)
                (enqueue! thread *threads*)
                (schedule-thread!))
-              (else (schedule-thread!))))))
+              (else
+               ;; (display (list "dead thread ?!?" (thread-name thread) (thread-status thread)))
+               ;; (newline)
+               (schedule-thread!))))))
 
 (define (current-thread) *thread*)
 
 (define (mark-thread-ready thread)
   (set-thread-status! thread $status/ready)
-  (enqueue! thread *threads*))
+  ;; (enqueue! thread *threads*)
+  )
 
 (define (really-thread-yield proc)
   (set-thread-continuation! *thread* proc)
@@ -297,19 +313,31 @@
   (spinlock-unlock! *scheduler-lock*))
 
 (define (thread-suspend! thread)
-  (call/cc
-    (lambda (k)
-      (spinlock-lock! *scheduler-lock*)
-      (set-thread-status! *thread* $status/suspended)
-      (set-thread-continuation! *thread* k)
-      (enqueue! *thread* *threads*)
-      (schedule-thread!))))
+  (spinlock-lock! *scheduler-lock*)
+  (set-thread-status! thread $status/suspended)
+  (if (eq? thread (current-thread))
+      (call/cc (lambda (resume)
+                 (set-thread-continuation! thread resume)
+                 (enqueue! thread *threads*)
+                 (schedule-thread!)))
+      (spinlock-unlock! *scheduler-lock*))))
 
 (define (thread-resume! thread)
   (spinlock-lock! *scheduler-lock*)
-  (set-thread-status! thread $status/ready)
-  (enqueue! thread *threads*)
+  (if (eq? (thread-status thread) $status/suspended)
+      (set-thread-status! thread $status/ready))
   (spinlock-unlock! *scheduler-lock*))
+
+(define (thread-named name)
+  (spinlock-lock! *scheduler-lock*)
+  (let loop ((threads (cons *thread* (car *threads*))))
+    (cond ((null? threads)
+           (spinlock-unlock! *scheduler-lock*)
+           #f)
+          ((equal? name (thread-name (car threads)))
+           (spinlock-unlock! *scheduler-lock*)
+           (car threads))
+          (else (loop (cdr threads))))))
 
 (define (thread-terminate! thread value)
   (spinlock-lock! *scheduler-lock*)
@@ -322,7 +350,8 @@
 	(for-each (lambda (t)
                     ;; (display (list 'resuming-joined (thread-name t))) (newline)
                     (set-thread-status! t $status/ready)
-                    (enqueue! t *threads*))
+                    ;; (enqueue! t *threads*)
+                    )
                   (thread-joiner thread))
 	(set-thread-status! thread $status/dead)
         ;; (display (list 'tr-at-end (threads))) (newline)
@@ -336,12 +365,13 @@
   ;;                (thread-name thread))) (newline)
   (if (eq? (thread-status thread) $status/dead)
       (spinlock-unlock! *scheduler-lock*)
-      (begin
-	(set-thread-joiner! thread (cons (current-thread) (thread-joiner thread)))
+      (let ((myself (current-thread)))
+	(set-thread-joiner! thread (cons myself (thread-joiner thread)))
         (call/cc
          (lambda (k)
            (set-thread-continuation! (current-thread) k)
            (set-thread-status! (current-thread) $status/suspended)
+           (enqueue! myself *threads*)
            (schedule-thread!))))))
 
 (define (thread-interrupt! thread thunk)

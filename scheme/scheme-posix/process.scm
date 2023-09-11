@@ -116,7 +116,7 @@
 ;;; == Process forms
 ;;
 ;; Process forms is SEXP notation for runner programs.
-;; 
+;;
 ;; (prog ...)
 
 ;;;
@@ -244,7 +244,7 @@
       (lambda ()
 	(set! *block-process* (cons (cons subprocess (current-thread))
 				    *block-process*))))
-    (thread-suspend!)))
+    (thread-suspend! (current-thread))))
 
 (define (watch-spawn-processes)
   (with-spinlock-held *process-lock*
@@ -261,7 +261,7 @@
 			   (cons subprocess-entry (loop (cdr subprocesses))))
 			  ((vector? rc)
 			   (delete-spawn-process! subprocess)
-			   (thread-start! thread)
+                           (set-thread-status! thread $status/ready)
 			   (loop (cdr subprocesses)))
 			  (else
 			   (cons subprocess-entry (loop (cdr subprocesses))))))))))))

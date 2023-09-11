@@ -97,7 +97,8 @@
                     (loop (cdr inits))))))))
     (if (and *top* (not error-during-init?))
         (*top* args)
-        #f)))
+        #f)
+    (thread-terminate! (current-thread) #f)))
 
 (define (save-image-file filename top)
   (set! *top* top)

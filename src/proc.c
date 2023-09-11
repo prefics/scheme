@@ -300,7 +300,7 @@ obj_t run(obj_t t, obj_t args)
   pc = 0 ;
   code_vector = VECTOR(template)->val[0] ;
   literals = VECTOR(template)->val[1] ;
-  cont = obj_undefined ;
+  cont = obj_false ;
   dynamic_env = obj_nil ;
   dynamic_cont = obj_nil ;
   trap = obj_undefined ;
